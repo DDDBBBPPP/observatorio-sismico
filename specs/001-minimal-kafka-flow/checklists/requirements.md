@@ -8,8 +8,8 @@
 
 ## Content Quality
 
-- [x] No contiene decisiones de implementación: mantiene abiertas configuración,
-      topic, formato y estrategia de contenedores.
+- [x] Distingue los requisitos de este hito de las decisiones ya tomadas,
+      incluida la partición única del topic de prueba.
 - [x] Está centrada en el valor de demostrar el recorrido mínimo y no en código.
 - [x] Puede entenderla una persona que debe ejecutar y defender la prueba.
 - [x] Todas las secciones obligatorias están completadas.
@@ -25,8 +25,8 @@
 - [x] El alcance excluye explícitamente los hitos posteriores.
 - [x] Las dependencias y supuestos están documentados.
 - [x] Las decisiones técnicas están separadas de los requisitos y reservadas
-      para `/speckit-plan`; las ambigüedades quedan reservadas para
-      `/speckit-clarify`.
+      para `/speckit-plan`, salvo las decisiones explícitamente registradas por
+      David; las ambigüedades quedan reservadas para `/speckit-clarify`.
 
 ## Feature Readiness
 
@@ -34,12 +34,17 @@
       casos límite o criterios de éxito.
 - [x] Las historias cubren el flujo principal y su reproducibilidad.
 - [x] La funcionalidad cumple los resultados medibles definidos.
-- [x] No se filtran decisiones de implementación en la especificación.
+- [x] Las decisiones de implementación registradas están identificadas como
+      decisiones de David y no se presentan como requisitos docentes.
 
 ## Notes
 
-- La especificación está lista para `/speckit-clarify` si aparece una
-  ambigüedad de requisitos; en caso contrario, está lista para
-  `/speckit-plan`.
-- `/speckit-plan` deberá presentar opciones y una recomendación antes de fijar
-  las decisiones técnicas que la especificación mantiene abiertas.
+- El plan de este hito está generado, pero no debe confundirse con una
+  implementación: todavía no existen código, Dockerfiles ni una ejecución
+  funcional validada.
+- La topología futura de live/replay y cualquier otra decisión técnica
+  pendiente deberán presentarse durante `/speckit-plan` con opciones,
+  recomendación y consecuencias antes de cerrar el plan.
+- La checklist se considera superada porque el alcance, los estados honestos,
+  la integridad del evento y las exclusiones están definidos de forma
+  comprobable.
