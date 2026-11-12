@@ -1,0 +1,36 @@
+# T031 Kafka detenido (ejecución oficial tras corrección de cierre)
+stopped_at=2026-11-12T18:10:34.3917320Z
+# docker compose stop kafka
+# docker compose exec -T producer python /app/src/main.py publish-test
+exit_code=1
+timeout_seconds=10
+run_id=run-6439064508e847efa82ae71d1c7c1d67
+docker : Unable connect to "kafka:9092": [Errno -2] Name or service not known
+En línea: 2 Carácter: 229
++ ... '); $output=docker compose exec -T producer python /app/src/main.py p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Unable connect ...rvice not known:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+{"run_id": "run-6439064508e847efa82ae71d1c7c1d67", "event_id": "test-6439064508e847efa82ae71d1c7c1d67", "status":
+"send_failed", "attempted_at": "2026-11-12T18:10:34.985859+00:00", "message": {"schema":
+"observatorio.test-envelope.v1", "run_id": "run-6439064508e847efa82ae71d1c7c1d67", "source": "synthetic-test", "mode":
+"test", "created_at": "2026-11-12T18:10:34.984548+00:00", "event": {"event_id":
+"test-6439064508e847efa82ae71d1c7c1d67", "event_type": "test-earthquake", "time": 1794507034984, "updated":
+1794507034984, "mag": 4.2, "mag_type": "mw-test", "place": "Localizacion ficticia de prueba", "coordinates": [-3.7,
+40.4, 12.0]}}, "failed_at": "2026-11-12T18:10:38.307547+00:00", "error": "KafkaConnectionError: Unable to bootstrap
+from [('kafka', 9092, <AddressFamily.AF_UNSPEC: 0>)]"}
+
+# estado durante la prueba
+NAME                              IMAGE                           COMMAND                  SERVICE    CREATED              STATUS                        PORTS
+observatorio-sismico-api-1        observatorio-sismico-api        "uvicorn src.main:ap…"   api        42 minutes ago       Up 42 minutes (healthy)       127.0.0.1:8000->8000/tcp
+observatorio-sismico-consumer-1   observatorio-sismico-consumer   "python /app/src/mai…"   consumer   10 minutes ago       Up 48 seconds (healthy)
+observatorio-sismico-kafka-1      apache/kafka:3.9.0              "/__cacert_entrypoin…"   kafka      42 minutes ago       Exited (143) 4 seconds ago
+observatorio-sismico-postgres-1   postgres:16-alpine              "docker-entrypoint.s…"   postgres   42 minutes ago       Up 42 minutes (healthy)       5432/tcp
+observatorio-sismico-producer-1   observatorio-sismico-producer   "python /app/src/mai…"   producer   About a minute ago   Up About a minute (healthy)
+
+resultado=send_failed; no hubo send_confirmed
+
+# Restauración posterior
+kafka_state=running/healthy
+producer_state=running/healthy

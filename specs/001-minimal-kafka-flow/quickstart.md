@@ -37,8 +37,9 @@ estado de la API, no ingesta realizada.
 ## Activación de una ejecución
 
 Esperar a que Kafka, PostgreSQL, API, productor y consumidor informen de su
-estado previsto. Generar un `run_id` y `event_id` nuevos y activar exactamente
-una ejecución dentro del productor ya iniciado:
+estado previsto. El productor genera un `run_id` y `event_id` nuevos por
+ejecución. Registrar primero la hora de inicio en `$startedAt` y activar
+exactamente una ejecución dentro del productor ya iniciado:
 
 ```powershell
 docker compose exec -T producer python /app/src/main.py publish-test
@@ -56,7 +57,7 @@ Consultar los logs del consumidor limitando la ventana a después del inicio de
 esta ejecución y buscando el `run_id` actual:
 
 ```powershell
-docker compose logs --no-log-prefix --since <inicio-ejecucion> consumer
+docker compose logs --no-log-prefix --since $startedAt consumer
 ```
 
 Conservar el JSON que el consumidor registra como recibido. La comprobación
@@ -66,11 +67,11 @@ produce `receive_confirmed`. Si el consumidor no recibe el mensaje, aparece
 otro `run_id` o algún campo difiere, registrar `receive_failed`; un log antiguo
 no cuenta.
 
-Ejecutar el verificador desde la raíz del repositorio con Python 3.12
-instalado:
+Ejecutar el verificador desde la raíz del repositorio con Python 3.14 o
+compatible:
 
 ```powershell
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion>
+python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt
 ```
 
 El bind mount de Compose hace visibles en Windows
@@ -82,12 +83,12 @@ JSON del consumidor, modificar solo la copia y pedir al verificador que use
 esa copia:
 
 ```powershell
-Copy-Item evidence\001-minimal-kafka-flow\<run_id>\consumer.json evidence\001-minimal-kafka-flow\<run_id>\consumer-altered.json
-$altered = 'evidence\001-minimal-kafka-flow\<run_id>\consumer-altered.json'
+Copy-Item "evidence\001-minimal-kafka-flow\$runId\consumer.json" "evidence\001-minimal-kafka-flow\$runId\consumer-altered.json"
+$altered = "evidence\001-minimal-kafka-flow\$runId\consumer-altered.json"
 $json = Get-Content $altered -Raw | ConvertFrom-Json
-$json.event.place = 'ALTERED-FOR-NEGATIVE-TEST'
+$json[0].message.event.place = 'ALTERED-FOR-NEGATIVE-TEST'
 $json | ConvertTo-Json -Depth 10 | Set-Content $altered -Encoding utf8
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion> --consumer-json evidence\001-minimal-kafka-flow\<run_id>\consumer-altered.json
+python services\verifier\verify_event.py --evidence-dir "evidence\001-minimal-kafka-flow\$runId" --run-id $runId --started-at $startedAt --consumer-json $altered
 ```
 
 El resultado esperado es `receive_failed` con la diferencia concreta; el
@@ -107,9 +108,12 @@ Aplicar estas pruebas, una por vez, sin comandos de recuperación automática:
    Debe fallar la conexión o el acuse de Kafka;
    la prueba no debe ejecutar `docker compose up`, `start` ni recrear Kafka.
 3. **Consumidor detenido**: ejecutar `docker compose stop consumer` y después
-   `docker compose exec -T producer python /app/src/main.py publish-test`.
-   Puede conservarse `send_confirmed`, pero sin JSON recibido de esta ejecución
-   no puede existir `receive_confirmed`; el resultado final es fallo.
+   `docker compose exec -T producer python /app/src/main.py publish-test`. Para
+   probar la ausencia durante una ventana limitada, ejecutar el verificador con
+   `--timeout-seconds 5`. Puede conservarse `send_confirmed`, pero sin JSON recibido de esta ejecución
+   no puede existir `receive_confirmed`; el resultado final es fallo. Tras
+   restaurar el consumidor, Kafka puede entregar el mensaje pendiente: esa
+   entrega posterior se registra aparte y no cambia el resultado negativo.
 
 En cada caso conservar comando, componente, síntoma, salida y resultado.
 La política normal `restart: unless-stopped` no sustituye la prueba: después de
@@ -148,3 +152,17 @@ docker compose down
 No borrar volúmenes durante esta fase sin documentarlo. El hito no exige
 persistencia de eventos, pero sí que la limpieza y el estado del entorno sean
 reproducibles.
+
+## Repetición US2 observada
+
+En Windows, con Docker Desktop e imágenes disponibles, la repetición ejecutada
+el 2026-11-12 generó un `run_id` y `event_id` nuevos, conservó el acuse Kafka,
+el JSON del consumidor y una verificación `receive_confirmed`. Los estados
+observados fueron `running (healthy)` para los cinco servicios antes y después
+de la ejecución. La evidencia está en
+`evidence\001-minimal-kafka-flow\repeat\<run_id>\`.
+
+Las tres pruebas negativas se ejecutan una a una: se guarda primero el
+resultado de `docker compose stop` y la activación fallida, y solo después se
+restaura el componente con `docker compose up -d <servicio>`. Durante cada
+ventana negativa no se ejecuta `up`, `start` ni una recreación.

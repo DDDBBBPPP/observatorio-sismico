@@ -1,0 +1,31 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.crt
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Local evidence and runtime output
+evidence/001-minimal-kafka-flow/*
+!evidence/001-minimal-kafka-flow/.gitkeep
+!evidence/001-minimal-kafka-flow/README.md
+!evidence/001-minimal-kafka-flow/selected/
+!evidence/001-minimal-kafka-flow/selected/**
+*.log
+
+# Docker and editor state
+.docker/
+.pytest_cache/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

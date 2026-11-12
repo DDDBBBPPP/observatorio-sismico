@@ -1,0 +1,28 @@
+[
+  {
+    "run_id": "run-1b33326097f74ee5a0863afcc2d28688",
+    "received_at": "2026-11-12T21:28:33.266842+00:00",
+    "status": "received",
+    "message": {
+      "schema": "observatorio.test-envelope.v1",
+      "run_id": "run-1b33326097f74ee5a0863afcc2d28688",
+      "source": "synthetic-test",
+      "mode": "test",
+      "created_at": "2026-11-12T21:28:33.224826+00:00",
+      "event": {
+        "event_id": "test-1b33326097f74ee5a0863afcc2d28688",
+        "event_type": "test-earthquake",
+        "time": 1794518913224,
+        "updated": 1794518913224,
+        "mag": 4.2,
+        "mag_type": "mw-test",
+        "place": "Localizacion ficticia de prueba",
+        "coordinates": [
+          -3.7,
+          40.4,
+          12.0
+        ]
+      }
+    }
+  }
+]

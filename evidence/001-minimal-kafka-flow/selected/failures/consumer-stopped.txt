@@ -1,0 +1,37 @@
+# T032 Consumidor detenido
+started_at=2026-11-12T18:09:42.6330403Z
+# docker compose stop consumer
+NAME                              IMAGE                           COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+observatorio-sismico-api-1        observatorio-sismico-api        "uvicorn src.main:ap…"   api        41 minutes ago   Up 41 minutes (healthy)   127.0.0.1:8000->8000/tcp
+observatorio-sismico-consumer-1   observatorio-sismico-consumer   "python /app/src/mai…"   consumer   9 minutes ago    Up 8 minutes (healthy)
+observatorio-sismico-kafka-1      apache/kafka:3.9.0              "/__cacert_entrypoin…"   kafka      41 minutes ago   Up 54 seconds (healthy)   9092/tcp
+observatorio-sismico-postgres-1   postgres:16-alpine              "docker-entrypoint.s…"   postgres   41 minutes ago   Up 41 minutes (healthy)   5432/tcp
+observatorio-sismico-producer-1   observatorio-sismico-producer   "python /app/src/mai…"   producer   30 seconds ago   Up 18 seconds (healthy)
+
+# docker compose exec -T producer python /app/src/main.py publish-test
+publish_exit_code=0
+{"run_id": "run-d43c3cc4372949aaa24f2f85855b6e27", "event_id": "test-d43c3cc4372949aaa24f2f85855b6e27", "status": "send_confirmed", "attempted_at": "2026-11-12T18:09:43.286589+00:00", "message": {"schema": "observatorio.test-envelope.v1", "run_id": "run-d43c3cc4372949aaa24f2f85855b6e27", "source": "synthetic-test", "mode": "test", "created_at": "2026-11-12T18:09:43.285414+00:00", "event": {"event_id": "test-d43c3cc4372949aaa24f2f85855b6e27", "event_type": "test-earthquake", "time": 1794506983285, "updated": 1794506983285, "mag": 4.2, "mag_type": "mw-test", "place": "Localizacion ficticia de prueba", "coordinates": [-3.7, 40.4, 12.0]}}, "confirmed_at": "2026-11-12T18:09:43.318298+00:00", "kafka": {"topic": "observatorio-test", "partition": 0, "offset": 2}}
+
+# python services\\verifier\\verify_event.py ... --timeout-seconds 5
+verifier_exit_code=1
+{
+  "run_id": "run-d43c3cc4372949aaa24f2f85855b6e27",
+  "checked_at": "2026-11-12T19:09:43.569776+01:00",
+  "status": "receive_failed",
+  "reason": "evidencia del consumidor ausente, antigua o fuera de plazo"
+}
+
+# estado durante la ventana negativa
+NAME                              IMAGE                           COMMAND                  SERVICE    CREATED          STATUS                        PORTS
+observatorio-sismico-api-1        observatorio-sismico-api        "uvicorn src.main:ap…"   api        41 minutes ago   Up 41 minutes (healthy)       127.0.0.1:8000->8000/tcp
+observatorio-sismico-consumer-1   observatorio-sismico-consumer   "python /app/src/mai…"   consumer   9 minutes ago    Exited (137) 6 seconds ago
+observatorio-sismico-kafka-1      apache/kafka:3.9.0              "/__cacert_entrypoin…"   kafka      41 minutes ago   Up About a minute (healthy)   9092/tcp
+observatorio-sismico-postgres-1   postgres:16-alpine              "docker-entrypoint.s…"   postgres   41 minutes ago   Up 41 minutes (healthy)       5432/tcp
+observatorio-sismico-producer-1   observatorio-sismico-producer   "python /app/src/mai…"   producer   46 seconds ago   Up 35 seconds (healthy)
+
+resultado_negativo=receive_failed por ausencia de recepción durante la ventana; no se usó evidencia antigua
+
+# Restauración posterior (fuera de la prueba negativa)
+consumer_state=running/healthy
+post_restore_delivery=True
+La recepción posterior no modifica verification.json, que conserva receive_failed.

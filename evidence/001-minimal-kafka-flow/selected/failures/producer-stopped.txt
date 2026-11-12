@@ -1,0 +1,30 @@
+# T030 Productor detenido
+started_at=2026-11-12T18:08:13.4972978Z
+# docker compose stop producer
+NAME                              IMAGE                           COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+observatorio-sismico-api-1        observatorio-sismico-api        "uvicorn src.main:ap…"   api        40 minutes ago   Up 39 minutes (healthy)   127.0.0.1:8000->8000/tcp
+observatorio-sismico-consumer-1   observatorio-sismico-consumer   "python /app/src/mai…"   consumer   7 minutes ago    Up 7 minutes (healthy)
+observatorio-sismico-kafka-1      apache/kafka:3.9.0              "/__cacert_entrypoin…"   kafka      40 minutes ago   Up 39 minutes (healthy)   9092/tcp
+observatorio-sismico-postgres-1   postgres:16-alpine              "docker-entrypoint.s…"   postgres   40 minutes ago   Up 39 minutes (healthy)   5432/tcp
+observatorio-sismico-producer-1   observatorio-sismico-producer   "python /app/src/mai…"   producer   32 seconds ago   Up 21 seconds (healthy)
+
+# docker compose exec -T producer python /app/src/main.py publish-test
+exit_code=1
+docker : service "producer" is not running
+En línea: 2 Carácter: 264
++ ... ut; $output=docker compose exec -T producer python /app/src/main.py p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (service "producer" is not running:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+# estado durante la prueba
+NAME                              IMAGE                           COMMAND                  SERVICE    CREATED          STATUS                                PORTS
+observatorio-sismico-api-1        observatorio-sismico-api        "uvicorn src.main:ap…"   api        40 minutes ago   Up 40 minutes (healthy)               127.0.0.1:8000->8000/tcp
+observatorio-sismico-consumer-1   observatorio-sismico-consumer   "python /app/src/mai…"   consumer   7 minutes ago    Up 7 minutes (healthy)
+observatorio-sismico-kafka-1      apache/kafka:3.9.0              "/__cacert_entrypoin…"   kafka      40 minutes ago   Up 40 minutes (healthy)               9092/tcp
+observatorio-sismico-postgres-1   postgres:16-alpine              "docker-entrypoint.s…"   postgres   40 minutes ago   Up 40 minutes (healthy)               5432/tcp
+observatorio-sismico-producer-1   observatorio-sismico-producer   "python /app/src/mai…"   producer   43 seconds ago   Exited (137) Less than a second ago
+
+run_id=none (el productor detenido no pudo generar evidencia)
+resultado=send_failed; no hubo send_confirmed
