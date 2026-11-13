@@ -79,3 +79,55 @@ JSON del flujo correcto `run-1b33326097f74ee5a0863afcc2d28688` y una copia de
 cada fallo deliberado con su comando, código, síntoma y restauración. Las
 carpetas `repeat/`, `failures/` y los demás `run-*` son evidencias locales
 regenerables y permanecen ignoradas.
+
+**Trazabilidad del traslado**: las copias de evidencias históricas conservan
+el comando que se ejecutó antes de trasladar el verificador desde
+`services/verifier/` a `tools/verifier/`. Las instrucciones actuales y las
+nuevas ejecuciones deben usar `python tools\verifier\verify_event.py`.
+
+## Validación T038
+
+La configuración del topic sintético quedó restringida a una partición y una
+réplica. Las ejecuciones aisladas con
+`KAFKA_TEST_PARTITIONS=2` y con
+`KAFKA_TEST_REPLICATION_FACTOR=2` terminaron con código 1 antes de crear un
+topic o publicar; ambas mostraron el nombre de la variable, el valor recibido
+y el valor exigido. La comprobación normal posterior reconstruyó Compose,
+mantuvo los cinco servicios `running (healthy)`, describió
+`observatorio-test` con una partición y una réplica y obtuvo
+`send_confirmed`/`receive_confirmed` para el nuevo
+`run-263ead5982f34538bd537c757d6bb9e5` (offset 4). La evidencia JSON completa
+de esa ejecución permanece local y regenerable; la selección versionable
+anterior no se amplía con ejecuciones duplicadas.
+
+Comandos observados: `docker compose config --quiet` (0),
+`docker compose build producer` (0), ambos `docker compose run --rm --no-deps`
+divergentes (1), `docker compose up --build -d` (0), `curl.exe -fsS
+http://localhost:8000/api/salud` (0), descripción del topic (0),
+`publish-test` (0) y `verify_event.py` (0). La salida detallada de la
+validación normal se conserva en
+`run-263ead5982f34538bd537c757d6bb9e5/t038-validation.txt`.
+
+## Validación tras la reorganización
+
+El 2026-11-12 se repitió la validación desde la raíz con los contextos
+`producer/`, `consumer/` y `api/`, y el verificador en `tools/verifier/`.
+Los comandos y códigos observados fueron:
+
+| Comando | Código | Resultado |
+|---|---:|---|
+| `docker compose config --quiet` | 0 | Configuración válida |
+| `docker compose up --build -d` | 0 | Imágenes reconstruidas y cinco servicios iniciados |
+| `docker compose ps` | 0 | `api`, `consumer`, `kafka`, `postgres` y `producer` `healthy` |
+| `Invoke-WebRequest http://127.0.0.1:8000/api/salud` | 0 | HTTP 200, `state=ready`, `ingestion=not_started` |
+| `kafka-topics.sh --describe --topic observatorio-test` | 0 | `PartitionCount: 1`, `ReplicationFactor: 1` |
+| `docker compose exec -T producer ... publish-test` | 0 | `send_confirmed`, partición 0, offset 5 |
+| `python tools\verifier\verify_event.py ...` | 0 | `receive_confirmed` |
+
+La ejecución nueva fue `run-c253c5ac3c60465faf16d92a3abe8674`, con
+`event_id=test-c253c5ac3c60465faf16d92a3abe8674`. El evento observado mantuvo
+`mag=4.2`, `place="Localizacion ficticia de prueba"` y
+`coordinates=[-3.7, 40.4, 12.0]`. El productor y el consumidor conservaron
+los JSON bajo `run-c253c5ac3c60465faf16d92a3abe8674/`, y el verificador
+comparó el envoltorio y todos los campos del evento. Esta ejecución completa
+es local y regenerable, no se añade a la selección pequeña de Git.

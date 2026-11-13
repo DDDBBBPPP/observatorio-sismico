@@ -10,7 +10,7 @@ antigüedad o diferencias.
 Desde Windows, con Python 3.14 o compatible:
 
 ```powershell
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt
+python tools\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt
 ```
 
 Para una prueba negativa sobre una copia:
@@ -21,5 +21,5 @@ $altered = "evidence\001-minimal-kafka-flow\$runId\consumer-altered.json"
 $json = Get-Content $altered -Raw | ConvertFrom-Json
 $json[0].message.event.place = "ALTERED-FOR-NEGATIVE-TEST"
 $json | ConvertTo-Json -Depth 10 | Set-Content $altered -Encoding utf8
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt --consumer-json $altered
+python tools\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt --consumer-json $altered
 ```

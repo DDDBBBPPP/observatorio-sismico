@@ -1,7 +1,7 @@
 # Comprobación reproducible en Windows
 
-Esta guía valida el primer hito cuando exista la implementación descrita en el
-plan. No contiene código de servicios.
+Esta guía valida la implementación actual del primer hito descrita en el plan.
+No contiene código de servicios.
 
 ## Prerrequisitos
 
@@ -13,6 +13,18 @@ plan. No contiene código de servicios.
   de construcción completada. El objetivo de diez minutos empieza cuando el
   entorno está preparado; no incluye clonar, descargar imágenes ni el primer
   `docker compose build`.
+- El topic `observatorio-test` de este hito está fijado a una partición y una
+  réplica. Si `KAFKA_TEST_PARTITIONS` o `KAFKA_TEST_REPLICATION_FACTOR` tienen
+  otro valor, el productor falla antes de crear el topic o publicar.
+
+  Para comprobar la restricción sin tocar el topic ni los volúmenes, ejecutar
+  cada caso por separado; ambos deben terminar con código 1 y mostrar la
+  variable divergente:
+
+  ```powershell
+  docker compose run --rm --no-deps -e KAFKA_TEST_PARTITIONS=2 producer python /app/src/main.py publish-test
+  docker compose run --rm --no-deps -e KAFKA_TEST_REPLICATION_FACTOR=2 producer python /app/src/main.py publish-test
+  ```
 
 ## Arranque
 
@@ -71,7 +83,7 @@ Ejecutar el verificador desde la raíz del repositorio con Python 3.14 o
 compatible:
 
 ```powershell
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt
+python tools\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\$runId --run-id $runId --started-at $startedAt
 ```
 
 El bind mount de Compose hace visibles en Windows
@@ -88,7 +100,7 @@ $altered = "evidence\001-minimal-kafka-flow\$runId\consumer-altered.json"
 $json = Get-Content $altered -Raw | ConvertFrom-Json
 $json[0].message.event.place = 'ALTERED-FOR-NEGATIVE-TEST'
 $json | ConvertTo-Json -Depth 10 | Set-Content $altered -Encoding utf8
-python services\verifier\verify_event.py --evidence-dir "evidence\001-minimal-kafka-flow\$runId" --run-id $runId --started-at $startedAt --consumer-json $altered
+python tools\verifier\verify_event.py --evidence-dir "evidence\001-minimal-kafka-flow\$runId" --run-id $runId --started-at $startedAt --consumer-json $altered
 ```
 
 El resultado esperado es `receive_failed` con la diferencia concreta; el

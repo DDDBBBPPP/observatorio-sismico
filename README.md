@@ -2,6 +2,70 @@
 
 Empieza por `ENUNCIADO.md`. Para una explicación paso a paso, consulta `FAQ-ALUMNADO.md`: contiene preguntas frecuentes, ejemplos de revisiones y duplicados y un itinerario de trabajo. Este paquete aporta el enunciado y la base cartográfica, no una solución completa del proyecto.
 
+## Hito 001: flujo mínimo verificable
+
+Este repositorio contiene ya el flujo sintético de cinco servicios separado del
+frontend: `producer/`, `consumer/`, `api/`, Kafka y PostgreSQL. El verificador
+externo está en `tools/verifier/`; no es un sexto servicio Compose. El flujo
+actual demuestra arranque, salud técnica y el recorrido de un evento sintético
+por Kafka. Todavía no implementa ingesta USGS real, persistencia de terremotos,
+API sísmica de consulta, despliegue en Netlify ni exposición mediante ngrok.
+
+### Arranque reproducible en Windows
+
+Requisitos: Docker Desktop con el motor Linux iniciado y Compose v2, Git,
+PowerShell, Python 3.14 o compatible para el verificador local y Node.js/npm
+para el frontend. Desde la raíz de un clon nuevo:
+
+```powershell
+Copy-Item .env.example .env
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
+Invoke-WebRequest http://127.0.0.1:8000/api/salud
+```
+
+Los cinco servicios Compose son `kafka`, `postgres`, `producer`, `consumer` y
+`api`. Hay que comprobar que sus estados sean `healthy`; el endpoint
+`/api/salud` solo informa del estado técnico de la API y no demuestra una
+ingesta sísmica.
+
+El topic de prueba se crea con una partición y un factor de réplica de uno.
+Para ejecutar una prueba sintética controlada y obtener el `run_id`:
+
+```powershell
+$startedAt = (Get-Date).ToUniversalTime().ToString("o")
+docker compose exec -T producer python /app/src/main.py publish-test
+```
+
+Con el `run_id` mostrado por el productor, ejecuta el verificador desde la
+raíz (sustituyendo la variable por el valor observado):
+
+```powershell
+$runId = "run-REEMPLAZAR"
+python tools\verifier\verify_event.py `
+  --evidence-dir "evidence\001-minimal-kafka-flow\$runId" `
+  --run-id $runId --started-at $startedAt
+```
+
+El JSON del productor, el recibido por el consumidor y la verificación se
+guardan bajo `evidence/001-minimal-kafka-flow/` durante la ejecución local.
+Las ejecuciones regenerables y los volúmenes Docker están ignorados por Git;
+consulta `specs/001-minimal-kafka-flow/quickstart.md` para los comandos
+completos y las pruebas negativas del hito.
+
+El frontend Angular se inicia por separado y sigue siendo una demostración:
+
+```powershell
+Set-Location frontend
+npm ci
+npm start
+```
+
+Abre `http://localhost:4200`. Levantar Compose no configura por sí solo el
+frontend, USGS, la API sísmica, Netlify ni ngrok; esas integraciones pertenecen
+a hitos posteriores y requieren configuración y validaciones propias.
+
 ## 1. Ejecutar el mapa de demostración
 
 Requisitos: Node.js 22.12 o posterior dentro de la rama 22, o Node 24; npm; acceso a Internet para instalar dependencias y descargar el mapa base.

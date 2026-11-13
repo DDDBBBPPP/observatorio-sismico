@@ -14,6 +14,12 @@ honesto, un evento sintético y su comprobación extremo a extremo. Quedan fuera
 USGS real, persistencia de terremotos, endpoints sísmicos de consulta, Angular,
 Netlify, ngrok y replay.
 
+**Nota de ubicación**: las tareas conservan sus identificadores y trazabilidad,
+pero la implementación final sitúa `producer/`, `consumer/` y `api/` en la
+raíz, al nivel de `frontend/`, y `tools/verifier/` como herramienta externa.
+Kafka y PostgreSQL continúan definidos como imágenes oficiales en
+`compose.yaml`.
+
 **Pruebas**: no se añaden tareas TDD independientes; la especificación exige
 escenarios de aceptación ejecutables y evidencias reproducibles.
 
@@ -22,10 +28,10 @@ escenarios de aceptación ejecutables y evidencias reproducibles.
 **Purpose**: preparar la estructura de los cinco servicios sin implementar aún
 la lógica real de terremotos.
 
-- [X] T001 Crear la estructura `services/producer/`, `services/consumer/`, `services/api/`, `services/verifier/`, `evidence/001-minimal-kafka-flow/` y los archivos base `compose.yaml` y `.env.example` en la raíz; `services/verifier/` es una herramienta de comprobación y no un sexto servicio Compose.
-- [X] T002 [P] Crear `services/producer/Dockerfile` y `services/producer/requirements.txt` para una imagen Python independiente con `aiokafka` y sus dependencias fijadas.
-- [X] T003 [P] Crear `services/consumer/Dockerfile` y `services/consumer/requirements.txt` para una imagen Python independiente con `aiokafka` y sus dependencias fijadas.
-- [X] T004 [P] Crear `services/api/Dockerfile` y `services/api/requirements.txt` para una imagen Python independiente con FastAPI, Uvicorn y sus dependencias fijadas.
+- [X] T001 Crear la estructura `producer/`, `consumer/`, `api/`, `tools/verifier/`, `evidence/001-minimal-kafka-flow/` y los archivos base `compose.yaml` y `.env.example` en la raíz; `tools/verifier/` es una herramienta de comprobación y no un sexto servicio Compose.
+- [X] T002 [P] Crear `producer/Dockerfile` y `producer/requirements.txt` para una imagen Python independiente con `aiokafka` y sus dependencias fijadas.
+- [X] T003 [P] Crear `consumer/Dockerfile` y `consumer/requirements.txt` para una imagen Python independiente con `aiokafka` y sus dependencias fijadas.
+- [X] T004 [P] Crear `api/Dockerfile` y `api/requirements.txt` para una imagen Python independiente con FastAPI, Uvicorn y sus dependencias fijadas.
 - [X] T005 [P] Definir `.env.example` con nombres de servicio (`kafka`, `postgres`, `api`), `KAFKA_BOOTSTRAP_SERVERS`, topic de prueba, credenciales locales de PostgreSQL no reales y parámetros de comprobación, sin incluir secretos reales.
 
 ## Phase 2: Foundational
@@ -38,11 +44,11 @@ dos historias de usuario.
 - [X] T008 Configurar en `compose.yaml` la imagen fijada `postgres:16-alpine`, un volumen persistente para PostgreSQL y `pg_isready` como comprobación de salud; no crear tablas ni afirmar persistencia de eventos en este hito.
 - [X] T009 Configurar en `compose.yaml` volumen y retención explícita para los datos de Kafka, incluyendo la política de retención del topic de prueba, sin exponer el broker mediante el túnel.
 - [X] T010 Definir en `compose.yaml` `depends_on` con condiciones de salud, reintentos y límites de espera para que el orden de arranque no se interprete como disponibilidad.
-- [X] T011 Implementar la configuración común de estados `starting`, `ready`, `completed`, `failed` y `unavailable` en `services/producer/src/status.py`, `services/consumer/src/status.py` y `services/api/src/status.py`, incluyendo timestamps y síntoma observable en caso de fallo.
+- [X] T011 Implementar la configuración común de estados `starting`, `ready`, `completed`, `failed` y `unavailable` en `producer/src/status.py`, `consumer/src/status.py` y `api/src/status.py`, incluyendo timestamps y síntoma observable en caso de fallo.
 - [X] T012 Añadir a `compose.yaml` la comprobación de salud de FastAPI mediante `GET http://127.0.0.1:8000/api/salud` dentro del contenedor y publicar únicamente `127.0.0.1:8000:8000` al host, sin presentar una ingesta inexistente como realizada.
-- [X] T013 Añadir a `services/producer/src/healthcheck.py` una comprobación real del productor: proceso persistente vivo, resolución de `kafka`, conexión de cliente `aiokafka` al broker, creación o validación idempotente del topic con exactamente una partición y una réplica, y operación de metadatos sin publicar el evento sintético; un `sleep`, proceso ocioso o contenedor `running` sin conectividad no puede producir `ready`.
-- [X] T014 Añadir a `services/consumer/src/healthcheck.py` una comprobación de proceso persistente y conexión al broker, y definir en `compose.yaml` reintentos para que el consumidor no se declare `ready` antes de Kafka.
-- [X] T015 Implementar `services/api/src/main.py` con `GET /api/salud`, respuesta de estado técnico y escucha en `0.0.0.0:8000`; no implementar `/api/eventos` ni otros endpoints sísmicos.
+- [X] T013 Añadir a `producer/src/healthcheck.py` una comprobación real del productor: proceso persistente vivo, resolución de `kafka`, conexión de cliente `aiokafka` al broker, creación o validación idempotente del topic con exactamente una partición y una réplica, y operación de metadatos sin publicar el evento sintético; un `sleep`, proceso ocioso o contenedor `running` sin conectividad no puede producir `ready`.
+- [X] T014 Añadir a `consumer/src/healthcheck.py` una comprobación de proceso persistente y conexión al broker, y definir en `compose.yaml` reintentos para que el consumidor no se declare `ready` antes de Kafka.
+- [X] T015 Implementar `api/src/main.py` con `GET /api/salud`, respuesta de estado técnico y escucha en `0.0.0.0:8000`; no implementar `/api/eventos` ni otros endpoints sísmicos.
 
 **Checkpoint**: Compose y sus comprobaciones deben estar listas para validar el
 arranque de los cinco servicios antes de enviar mensajes.
@@ -61,13 +67,13 @@ comparar los dos JSON de la misma ejecución por `run_id` y por todos sus campos
 
 ### Implementation for User Story 1
 
-- [X] T016 [US1] Implementar `services/producer/src/event_model.py` con el envoltorio JSON `observatorio.test-envelope.v1` y los campos obligatorios `schema`, `run_id`, `source=synthetic-test`, `mode=test`, `created_at` y `event`.
-- [X] T017 [US1] Implementar en `services/producer/src/event_model.py` el evento sintético con `event_id` no vacío y único por ejecución, `event_type=test-earthquake`, timestamps sintéticos en milisegundos UTC, `mag` numérica o nula, `mag_type`, `place` identificando la prueba y `coordinates` de tres números en orden `[longitud, latitud, profundidad_km]`.
-- [X] T018 [US1] Implementar `services/producer/src/main.py` como proceso persistente del servicio `producer`, con comando de espera controlada y `ready` únicamente después de la comprobación de Kafka de T013; no publicar automáticamente al arrancar.
-- [X] T019 [US1] Implementar en `services/producer/src/main.py` el proceso persistente con `python /app/src/main.py serve` y la activación controlada con `python /app/src/main.py publish-test`, ejecutable mediante `docker compose exec -T producer python /app/src/main.py publish-test`; generar `run_id`/`event_id`, publicar al topic de prueba y conservar en `/evidence/<run_id>/producer.json` el JSON exacto y el acuse.
-- [X] T020 [US1] Distinguir en `services/producer/src/main.py` `send_attempted`, `send_confirmed` y `send_failed`; `send_confirmed` solo puede emitirse después de la confirmación de Kafka y nunca equivale a recepción.
-- [X] T021 [US1] Implementar `services/consumer/src/main.py` como consumidor persistente del topic de prueba, registrando en `/evidence/<run_id>/consumer.json` el JSON exacto recibido, su `run_id`, timestamp de recepción y estado, sin comparar contra un original que el consumidor no posee.
-- [X] T022 [US1] Configurar en `services/consumer/src/main.py` la identificación explícita del mensaje como prueba y el registro de todos los mensajes sintéticos recibidos por su propio `run_id`; el consumidor no conoce la ejecución actual y no descarta mensajes por una comparación externa.
+- [X] T016 [US1] Implementar `producer/src/event_model.py` con el envoltorio JSON `observatorio.test-envelope.v1` y los campos obligatorios `schema`, `run_id`, `source=synthetic-test`, `mode=test`, `created_at` y `event`.
+- [X] T017 [US1] Implementar en `producer/src/event_model.py` el evento sintético con `event_id` no vacío y único por ejecución, `event_type=test-earthquake`, timestamps sintéticos en milisegundos UTC, `mag` numérica o nula, `mag_type`, `place` identificando la prueba y `coordinates` de tres números en orden `[longitud, latitud, profundidad_km]`.
+- [X] T018 [US1] Implementar `producer/src/main.py` como proceso persistente del servicio `producer`, con comando de espera controlada y `ready` únicamente después de la comprobación de Kafka de T013; no publicar automáticamente al arrancar.
+- [X] T019 [US1] Implementar en `producer/src/main.py` el proceso persistente con `python /app/src/main.py serve` y la activación controlada con `python /app/src/main.py publish-test`, ejecutable mediante `docker compose exec -T producer python /app/src/main.py publish-test`; generar `run_id`/`event_id`, publicar al topic de prueba y conservar en `/evidence/<run_id>/producer.json` el JSON exacto y el acuse.
+- [X] T020 [US1] Distinguir en `producer/src/main.py` `send_attempted`, `send_confirmed` y `send_failed`; `send_confirmed` solo puede emitirse después de la confirmación de Kafka y nunca equivale a recepción.
+- [X] T021 [US1] Implementar `consumer/src/main.py` como consumidor persistente del topic de prueba, registrando en `/evidence/<run_id>/consumer.json` el JSON exacto recibido, su `run_id`, timestamp de recepción y estado, sin comparar contra un original que el consumidor no posee.
+- [X] T022 [US1] Configurar en `consumer/src/main.py` la identificación explícita del mensaje como prueba y el registro de todos los mensajes sintéticos recibidos por su propio `run_id`; el consumidor no conoce la ejecución actual y no descarta mensajes por una comparación externa.
 - [X] T023 [US1] Añadir a `compose.yaml` el comando persistente de `producer` y el comando de `consumer`, sus variables de entorno, el topic separado y las conexiones internas por nombre de servicio; no añadir un sexto servicio para la activación.
 - [X] T024 [US1] Ejecutar y documentar la comprobación de arranque de los cinco servicios en `evidence/001-minimal-kafka-flow/<run_id>/startup.txt` usando exactamente:
 
@@ -89,8 +95,8 @@ docker compose logs --no-log-prefix --since <inicio-ejecucion> consumer
 
 Conservar el JSON y acuse del productor, el JSON del consumidor y el `run_id`; no declarar `receive_confirmed` todavía sin la comparación de T026.
 
-- [X] T026 [US1] Implementar `services/verifier/verify_event.py` y su ejecución documentada en `evidence/001-minimal-kafka-flow/<run_id>/verification.json` para seleccionar exactamente una evidencia del productor y una del consumidor por `run_id`, excluir registros anteriores al inicio de la ejecución y comparar `schema`, `run_id`, `source`, `mode`, `created_at` y todos los campos de `event`; emitir `receive_confirmed` solo si coinciden, o `receive_failed` con diferencia explícita.
-- [X] T027 [US1] Documentar en `services/verifier/README.md` y `specs/001-minimal-kafka-flow/quickstart.md` la separación de responsabilidades, el prerrequisito Python 3.14 o compatible y el comando exacto desde Windows con variables reales; un código 0 del productor no demuestra recepción. Incluir la copia de `consumer.json`, la alteración de un campo y la ejecución con `--consumer-json`, que debe producir `receive_failed` sin modificar la evidencia original.
+- [X] T026 [US1] Implementar `tools/verifier/verify_event.py` y su ejecución documentada en `evidence/001-minimal-kafka-flow/<run_id>/verification.json` para seleccionar exactamente una evidencia del productor y una del consumidor por `run_id`, excluir registros anteriores al inicio de la ejecución y comparar `schema`, `run_id`, `source`, `mode`, `created_at` y todos los campos de `event`; emitir `receive_confirmed` solo si coinciden, o `receive_failed` con diferencia explícita.
+- [X] T027 [US1] Documentar en `tools/verifier/README.md` y `specs/001-minimal-kafka-flow/quickstart.md` la separación de responsabilidades, el prerrequisito Python 3.14 o compatible y el comando exacto desde Windows con variables reales; un código 0 del productor no demuestra recepción. Incluir la copia de `consumer.json`, la alteración de un campo y la ejecución con `--consumer-json`, que debe producir `receive_failed` sin modificar la evidencia original.
 
 **Checkpoint**: US1 es aceptable solo con cinco servicios observables, `GET
 /api/salud` correcto, `send_confirmed` y `receive_confirmed` respaldado por la
@@ -146,7 +152,7 @@ distinguir envío, recepción, fallo y restauración sin inferencias silenciosas
 ## Phase 5: Polish y comprobación transversal
 
 - [X] T035 [P] Revisar `compose.yaml`, `.env.example`, los tres Dockerfiles y los manifiestos Python para confirmar versiones fijadas, nombres de servicio, volúmenes, retención, salud, reintentos y ausencia de secretos.
-- [X] T036 [P] Revisar `services/producer/`, `services/consumer/`, `services/api/` y `services/verifier/` para confirmar que no contienen extracción USGS, persistencia de terremotos, endpoints sísmicos, Angular ni replay.
+- [X] T036 [P] Revisar `producer/`, `consumer/`, `api/` y `tools/verifier/` para confirmar que no contienen extracción USGS, persistencia de terremotos, endpoints sísmicos, Angular ni replay.
 - [X] T037 Ejecutar la validación final de `quickstart.md`, actualizar `evidence/001-minimal-kafka-flow/README.md` con resultados observados y registrar explícitamente cualquier comprobación no realizada; no declarar funcionamiento solo por haber escrito código.
 
 ## Dependencias y orden de ejecución
@@ -217,3 +223,11 @@ T032       Fallo del consumidor detenido
 3. Repetir desde un entorno Windows preparado y conservar las evidencias.
 4. Dejar para hitos posteriores USGS real, persistencia, API sísmica, Angular,
    Netlify, ngrok y replay.
+
+## Phase 6: Convergence
+
+- [X] T038 Hacer invariable la configuración del topic sintético para exigir exactamente una partición y una réplica, rechazando valores divergentes en Compose, el productor y sus comprobaciones, según las reglas del topic de prueba del plan (partial).
+
+## Phase 7: Convergence
+
+- [X] T039 Verificar la trazabilidad de las evidencias tras el traslado del verificador: conservar `services\verifier\verify_event.py` en los registros históricos realmente ejecutados, mantener `tools\verifier\verify_event.py` en README y quickstart para las instrucciones actuales, y documentar la diferencia según T027, T032, T037 y la estructura del plan (partial, resuelta).

@@ -11,15 +11,15 @@ from aiokafka.admin import AIOKafkaAdminClient, NewTopic
 from aiokafka.errors import TopicAlreadyExistsError
 
 from event_model import build_test_event
+from topic_config import validated_topic_shape
 
 BOOTSTRAP = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 TOPIC = os.environ.get("KAFKA_TEST_TOPIC", "observatorio-test")
-PARTITIONS = int(os.environ.get("KAFKA_TEST_PARTITIONS", "1"))
-REPLICATION_FACTOR = int(os.environ.get("KAFKA_TEST_REPLICATION_FACTOR", "1"))
 PUBLISH_TIMEOUT_SECONDS = float(os.environ.get("KAFKA_PUBLISH_TIMEOUT_SECONDS", "10"))
 
 
 async def ensure_topic() -> None:
+    partitions, replication_factor = validated_topic_shape()
     host, _, port = BOOTSTRAP.rpartition(":")
     await asyncio.get_running_loop().run_in_executor(
         None, lambda: socket.getaddrinfo(host, int(port), type=socket.SOCK_STREAM)
@@ -29,16 +29,16 @@ async def ensure_topic() -> None:
     try:
         try:
             await admin.create_topics(
-                [NewTopic(TOPIC, num_partitions=PARTITIONS, replication_factor=REPLICATION_FACTOR)]
+                [NewTopic(TOPIC, num_partitions=partitions, replication_factor=replication_factor)]
             )
         except TopicAlreadyExistsError:
             pass
         topics = await admin.describe_topics([TOPIC])
         topic = topics[0] if topics else None
-        if topic is None or len(topic["partitions"]) != PARTITIONS:
+        if topic is None or len(topic["partitions"]) != partitions:
             raise RuntimeError("el topic no tiene exactamente una partición")
         if any(
-            len(partition["replicas"]) != REPLICATION_FACTOR
+            len(partition["replicas"]) != replication_factor
             for partition in topic["partitions"]
         ):
             raise RuntimeError("el topic no tiene exactamente una réplica")
@@ -54,6 +54,7 @@ async def serve() -> None:
 
 
 async def publish_test() -> int:
+    validated_topic_shape()
     message = build_test_event()
     evidence_dir = Path("/evidence") / message["run_id"]
     evidence_dir.mkdir(parents=True, exist_ok=False)
@@ -108,6 +109,7 @@ async def publish_test() -> int:
 def main() -> None:
     if len(sys.argv) != 2 or sys.argv[1] not in {"serve", "publish-test"}:
         raise SystemExit("Uso: python /app/src/main.py serve|publish-test")
+    validated_topic_shape()
     if sys.argv[1] == "serve":
         asyncio.run(serve())
     else:

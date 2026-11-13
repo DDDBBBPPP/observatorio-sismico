@@ -6,14 +6,15 @@ import sys
 from aiokafka.admin import AIOKafkaAdminClient, NewTopic
 from aiokafka.errors import TopicAlreadyExistsError
 
+from topic_config import validated_topic_shape
+
 
 BOOTSTRAP = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 TOPIC = os.environ.get("KAFKA_TEST_TOPIC", "observatorio-test")
-PARTITIONS = int(os.environ.get("KAFKA_TEST_PARTITIONS", "1"))
-REPLICATION_FACTOR = int(os.environ.get("KAFKA_TEST_REPLICATION_FACTOR", "1"))
 
 
 async def check() -> None:
+    partitions, replication_factor = validated_topic_shape()
     command_line = open("/proc/1/cmdline", encoding="utf-8").read().replace("\x00", " ")
     if "main.py" not in command_line or "serve" not in command_line:
         raise RuntimeError("el proceso persistente producer no está ejecutándose")
@@ -29,16 +30,16 @@ async def check() -> None:
     try:
         try:
             await admin.create_topics(
-                [NewTopic(TOPIC, num_partitions=PARTITIONS, replication_factor=REPLICATION_FACTOR)]
+                [NewTopic(TOPIC, num_partitions=partitions, replication_factor=replication_factor)]
             )
         except TopicAlreadyExistsError:
             pass
         topics = await admin.describe_topics([TOPIC])
         topic = topics[0] if topics else None
-        if topic is None or len(topic["partitions"]) != PARTITIONS:
+        if topic is None or len(topic["partitions"]) != partitions:
             raise RuntimeError("el topic no tiene exactamente una partición")
         if any(
-            len(partition["replicas"]) != REPLICATION_FACTOR
+            len(partition["replicas"]) != replication_factor
             for partition in topic["partitions"]
         ):
             raise RuntimeError("el topic no tiene exactamente una réplica")

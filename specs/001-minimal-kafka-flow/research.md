@@ -110,7 +110,7 @@ El verificador se ejecutará desde Windows, no como servicio Compose, con
 Python 3.12 disponible:
 
 ```powershell
-python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion>
+python tools\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion>
 ```
 
 **Alternativas consideradas**:

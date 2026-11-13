@@ -12,7 +12,7 @@ del hito 001. Las copias JSON del flujo correcto corresponden al mismo
 - Fecha: 2026-11-12.
 - Comando: `docker compose exec -T producer python /app/src/main.py publish-test`.
 - Resultado: código 0, `send_confirmed`, Kafka confirmó partición 0 y offset 3.
-- Verificador: `python services\verifier\verify_event.py ...`, código 0,
+- Verificador: `python tools\verifier\verify_event.py ...`, código 0,
   `receive_confirmed`.
 
 ## Fallos deliberados

@@ -111,13 +111,12 @@ specs/001-minimal-kafka-flow/
     └── service-status.md
 ```
 
-### Código previsto para la implementación posterior
+### Código implementado y ubicación actual
 
 ```text
 compose.yaml
 .env.example
-services/
-├── producer/
+producer/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── src/
@@ -125,25 +124,28 @@ services/
 │       ├── healthcheck.py
 │       ├── event_model.py
 │       └── status.py
-├── consumer/
+consumer/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── src/
 │       └── main.py
-└── api/
+api/
     ├── Dockerfile
     ├── requirements.txt
     └── src/
         └── main.py
-services/verifier/
+tools/verifier/
 ├── README.md
 └── verify_event.py
 evidence/
 └── 001-minimal-kafka-flow/
 ```
 
-Los nombres son una propuesta de estructura para `/speckit-tasks`, no archivos
-creados por esta fase. El frontend `frontend/` existente no se modifica.
+La implementación conserva la trazabilidad de las tareas originales, pero la
+ubicación final separa los tres servicios Compose en la raíz, al mismo nivel
+que `frontend/`, y mueve la herramienta externa a `tools/verifier/`. Kafka y
+PostgreSQL siguen siendo imágenes oficiales declaradas en `compose.yaml`. El
+frontend `frontend/` existente no se modifica en este hito.
 
 **Decisión de estructura**: separar productor, consumidor y API en directorios
 con imágenes Python propias, y coordinar Kafka y PostgreSQL mediante imágenes
@@ -205,7 +207,7 @@ separado el estado persistente y el resultado de la activación.
    El comando previsto es:
 
    ```powershell
-   python services\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion>
+   python tools\verifier\verify_event.py --evidence-dir evidence\001-minimal-kafka-flow\<run_id> --run-id <run_id> --started-at <inicio-ejecucion>
    ```
 7. Conservar estados, JSON, acuses, salida del consumidor, timestamps y
    resultado final. Los logs se consultarán con un límite temporal posterior al
