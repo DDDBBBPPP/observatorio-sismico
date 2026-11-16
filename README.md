@@ -22,6 +22,10 @@ docker compose ps
 Invoke-RestMethod http://127.0.0.1:8000/api/salud
 ```
 
+`docker compose up --build -d` arranca automáticamente el flujo **live**:
+productor → Kafka → consumidor → PostgreSQL → API. No descarga ni reconstruye
+el histórico 2025 de 18.302 registros.
+
 Esperar a que los cinco servicios indiquen `healthy`. PostgreSQL y Kafka
 persisten en volúmenes Compose; **no** usar `down -v` para reiniciar. La API
 solo expone `127.0.0.1:8000` en el equipo. El productor consulta el feed USGS
@@ -67,7 +71,10 @@ manifiesto antiguo de 140.559 registros tiene filtros distintos. Los originales
 históricos están excluidos de Git: una instalación limpia puede mostrar live
 tras arrancar los servicios, pero necesita descargar y procesar el histórico
 una vez para disponer de comparación. La cifra de una descarga nueva puede
-variar si USGS revisa el catálogo. Para obtener o reutilizar la descarga:
+variar si USGS revisa el catálogo. En un Windows nuevo, ejecutar el comando
+de descarga siguiente y después el comando principal de procesamiento de este
+apartado; el comando de prueba de un intervalo es opcional. Para obtener o
+reutilizar la descarga:
 
 ```powershell
 docker compose exec -T producer python /app/src/main.py load-historical 2025
@@ -133,8 +140,9 @@ stop api`, refrescar el panel y comprobar el aviso y la última lectura;
 refresco (hasta 60 s). Dejar los cinco servicios activos al terminar. David
 observó en la versión nueva «País», «Filtros aplicados» y la explicación de
 las dos fechas. En REPRODUCCIÓN de enero de 2025, USA **aplicado** mostró cero
-y «Todos los países» **aplicado** mostró diez. Quedan sin observación visual
-comunicada los gráficos, la tabla y el aviso de caída/recuperación.
+y «Todos los países» **aplicado** mostró diez. En Netlify, David aportó capturas
+del mapa, indicador, gráficos por país/hora y tabla. Siguen pendientes la
+observación visual completa de distribuciones y del aviso de caída/recuperación.
 
 ### Publicación manual y disponibilidad
 

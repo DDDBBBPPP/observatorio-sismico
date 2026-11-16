@@ -236,3 +236,21 @@ devolvió `[]`). Quedan por observar visualmente las distribuciones completas,
 el aviso durante caída y recuperación del túnel, y el acceso desde otro
 dispositivo. El sitio y la API respondieron mientras el PC, Docker y ngrok
 estaban activos; no se afirma disponibilidad con alguno de ellos apagado.
+
+## Revisión previa a PR — 16-11-2026
+
+| Comprobación nueva | Resultado |
+|---|---|
+| Rama inicial | `002-ingesta-usgs-persistencia`, commit `2847ce1` en local y `origin`; árbol limpio antes de esta revisión. |
+| Servicios/Compose | Cinco servicios `running/healthy`; `docker compose config --quiet` exit 0, con timeout de 15 s. |
+| API/túnel | ngrok administra `https://sapling-unlearned-blush.ngrok-free.dev` → `http://localhost:8000`. Salud, eventos y estadísticas HTTP 200 en local y por túnel con `ngrok-skip-browser-warning: 1`; instantánea live 199 eventos en ambos endpoints. |
+| Netlify/CORS | Página principal y `config.json` públicos sin sesión: HTTP 200. JSON: `mode=api`, base HTTPS correcta y `skipNgrokWarning=true`. OPTIONS desde el origen principal hacia eventos y estadísticas con el encabezado de ngrok: HTTP 200 y origen permitido. |
+| Build | `npm run build` exit 0; Angular informó 2,887 s de generación bajo límite de 120 s. Advertencia CommonJS de Leaflet. |
+| Pruebas existentes | `tests/acceptance.py`, `tests/filter_contract.py`, `frontend/tests/filter-query.mjs` y `frontend/tests/component-state.mjs`: exit 0 con límites individuales. Aceptación: histórico 18.302, replay 10. Filtros live de esa ejecución: USA 167, sin país 24, magnitud ≥4 13; números variables. |
+| Observación visual | No hubo navegador del agente (`[]`). Siguen vigentes las capturas aportadas por David del mapa, indicador y tabla; no se ejecutó una prueba visual nueva de distribuciones ni de pérdida/recuperación de API. |
+
+El README revisado separa el arranque live mediante `docker compose up --build
+-d` de la descarga y procesamiento adicionales necesarios para reconstruir
+el histórico de 18.302 en un Windows nuevo. No se probaron esos comandos en
+esta sesión ni se hizo una instalación limpia en otro equipo. T005/T006
+permanecen abiertas por las comprobaciones visuales y desde otro dispositivo.

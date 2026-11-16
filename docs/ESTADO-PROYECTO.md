@@ -224,8 +224,8 @@ No se elevan esas pruebas a superadas por el build o por respuestas HTTP.
 ## Punto de reanudación para otro agente (16-11-2026)
 
 - **Rama y Git.** Trabajar en `002-ingesta-usgs-persistencia`; `main` no se ha
-  fusionado. Al iniciar esta verificación el HEAD era `a1fe0f7` y no había
-  staging. La auditoría de 56 candidatos encontró cero archivos binarios,
+  fusionado. Al iniciar la revisión para PR, el commit local y remoto era
+  `2847ce1` y el árbol estaba limpio. La auditoría previa de 56 candidatos encontró cero archivos binarios,
   cero archivos mayores de 1 MiB y cero coincidencias de patrones de
   secretos de alta confianza. `.env`, `.netlify/`, originales históricos, volúmenes locales,
   `node_modules` y builds quedan fuera de Git. Comprobar `git status` y el
@@ -294,3 +294,32 @@ No se elevan esas pruebas a superadas por el build o por respuestas HTTP.
   caída controlada del túnel, observar aviso y recuperación, y reabrirlo.
   No instalar Hugo ni modificar el despliegue por fallos antiguos. No hay
   evidencia de disponibilidad permanente fuera del equipo local.
+
+### Revisión acotada para PR (16-11-2026)
+
+- `docker compose ps` mostró los cinco servicios `running/healthy`; `docker
+  compose config --quiet` terminó con exit 0. ngrok local confirmó el túnel
+  HTTPS hacia `http://localhost:8000`.
+- `/api/salud`, `/api/eventos` y `/api/estadisticas` respondieron HTTP 200
+  tanto en `127.0.0.1:8000` como por ngrok con el encabezado exigido; una
+  instantánea dio 199 eventos y 199 en estadísticas. Salud mostró
+  `source_last_fetch=2026-11-16T22:07:50.800256+00:00`.
+- Netlify principal sin sesión: `/` HTTP 200 con Angular y `/config.json`
+  HTTP 200 con `mode=api`, URL HTTPS del túnel y `skipNgrokWarning=true`.
+  Preflight OPTIONS desde ese origen hacia eventos y estadísticas: HTTP 200,
+  `Access-Control-Allow-Origin` exacto.
+- Tras aclarar el README, `npm run build` terminó con exit 0 (generación
+  2,887 s, límite 120 s; advertencia CommonJS de Leaflet). `tests/acceptance.py`,
+  `tests/filter_contract.py`, `frontend/tests/filter-query.mjs` y
+  `frontend/tests/component-state.mjs` terminaron con exit 0 y límites de
+  30–90 s. La aceptación confirmó histórico 18.302 y replay 10; los filtros
+  mostraron 167 USA, 24 sin país y 13 con magnitud ≥4 en una ventana live
+  móvil. No se ejecutó ninguna descarga ni carga histórica.
+- La guía Windows explica ahora explícitamente que `docker compose up
+  --build -d` arranca live y que un equipo nuevo necesita los comandos
+  adicionales de descarga y procesamiento para reconstruir el histórico.
+  No se simuló una instalación limpia en otro equipo.
+- El navegador del agente siguió sin estar disponible (`[]`). Las capturas
+  anteriores de David acreditan mapa, indicador y tabla en incógnito, pero
+  no distribuciones completas ni aviso visual de caída/recuperación. T005 y
+  T006 permanecen abiertos; tampoco se ha probado otro dispositivo.
