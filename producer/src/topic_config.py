@@ -31,3 +31,11 @@ def validated_topic_shape() -> tuple[int, int]:
             f"{EXPECTED_REPLICATION_FACTOR}; recibido {replication_factor}"
         )
     return EXPECTED_PARTITIONS, EXPECTED_REPLICATION_FACTOR
+
+
+def live_topic() -> str:
+    return os.environ.get("KAFKA_LIVE_TOPIC", "observatorio-usgs-live")
+
+
+def replay_topic() -> str:
+    return os.environ.get("KAFKA_REPLAY_TOPIC", "observatorio-usgs-replay")

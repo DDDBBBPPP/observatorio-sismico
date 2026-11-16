@@ -23,3 +23,22 @@ def build_test_event() -> dict:
             "coordinates": [-3.7, 40.4, 12.0],
         },
     }
+
+
+def build_live_event(feature: dict, run_id: str, response_id: str) -> dict:
+    properties = feature.get("properties") or {}
+    return {
+        "schema": "observatorio.event-envelope.v1",
+        "run_id": run_id,
+        "source": "usgs",
+        "mode": "live",
+        "ingested_at": datetime.now(timezone.utc).isoformat(),
+        "event": feature,
+        "event_id": feature["id"],
+        "updated": properties["updated"],
+        "provenance": {
+            "run_id": run_id,
+            "source_response_id": response_id,
+            "load_type": "live_feed",
+        },
+    }

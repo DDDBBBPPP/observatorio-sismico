@@ -44,6 +44,12 @@ Para limitar el tamaño, la API puede aplicar un máximo documentado de puntos. 
 | GET /api/salud | Estado API y fecha de última ingesta; no credenciales |
 | GET /api/estadisticas | Conteos por hora UTC/país, distribuciones y comparación histórica |
 
+`/api/salud` distingue `source_last_fetch.received_at` (última consulta USGS
+correcta, incluso sin eventos nuevos) de `ingestion.finished_at` (último run
+procesado por el consumidor). `metadata.last_ingestion` en `/api/eventos`
+refleja la primera fecha, en milisegundos Unix UTC; si aún no existe la marca
+del productor, usa el último run procesado disponible.
+
 Los filtros de estadísticas deben equivaler a los del mapa. Cada resultado debe indicar periodo, filtros, unidad y registros sin valor. Si la base falla, devuelve un error explícito; no cero eventos como si fuera un resultado válido.
 
 ## Acceso desde Netlify

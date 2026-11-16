@@ -1,0 +1,296 @@
+# Estado del proyecto
+
+## Bloque 1 — entorno e histórico (15-11-2026)
+
+- Rama local `002-ingesta-usgs-persistencia`; cambios 002/003 sin commit conservados.
+- `docker ps` mostró solo Kafka y PostgreSQL saludables. No había proceso batch residual en Windows ni contenedor batch; `pg_stat_activity` no mostró bloqueos ni transacciones ajenas a la consulta. Por ello no se detuvo ningún proceso.
+- Consulta PostgreSQL observada: run `historical-2025-minmag4-earthquake` completo, 12 respuestas, 18.302 versiones históricas y 18.302 eventos actuales históricos, cuarentena 0. El contador `records_accepted=16.302` del run discrepa y requiere aclaración; no se usará como denominador.
+- Archivos cambiados: `consumer/src/batch.py`, `consumer/src/main.py`, `consumer/src/migrations/001_ingestion_schema.sql`. El batch nuevo usa bloqueo de sesión, checkpoint por intervalo y commit por intervalo, sin borrar runs ni originales. `docker compose build consumer` terminó correctamente.
+- Primera prueba de enero detenida tras observar tráfico JSON repetido, antes de confirmar intervalo; solo se detuvo su contenedor identificado. La corrección guarda el original grande una vez por intervalo.
+- Segunda prueba de enero: checkpoint con 1.413 registros, 0 aceptados y 1.413 duplicados porque las versiones ya estaban cargadas. Repetición: `skipped_checkpoint`, estado `partial`, exit 0. Run principal: `already_completed`, 12 intervalos, exit 0. No se reconstruyó el año.
+- Decisión técnica cerrada: replay en tablas `replay_event_version` y `replay_event_current`, separado de `event_version`/`event_current`; cambios en migración, consumidor, productor, API y Angular. Falta comprobarlo en ejecución.
+- Pendientes: servicios, replay, aceptación y documentación de resultados. Decisiones de transformación: se mantienen las de specs y FAQ; ninguna nueva abierta detectada. Siguiente comando: `docker compose up --build -d`.
+
+## Bloque 2 — servicios y replay (15-11-2026)
+
+- `docker compose up --build -d` finalizó con exactamente cinco servicios; `docker compose ps` mostró los cinco saludables. `/api/salud` devolvió 200 y un run live reciente con 14 aceptados. `npm run build` en `frontend/` finalizó con éxito; advirtió solo que Leaflet es CommonJS.
+- Archivos cambiados: migración SQL, `consumer/src/persistence.py`, `consumer/src/main.py`, `producer/src/main.py`, `api/src/main.py`, `frontend/src/app/app.component.{ts,html,css}`. El replay está en tablas y filtro API propios; el panel tiene selector REPRODUCCIÓN y gráficos de barras por país y hora.
+- Primer envío replay falló por límite de mensaje Kafka (1.087.398 bytes): el sobre incluía el original mensual completo. Se cambió a original del evento y referencia al archivo mensual intacto. Segundo envío publicó 10 mensajes, exit 0. PostgreSQL: 10 filas en `replay_event_current`; `/api/eventos?mode=replay` devolvió 10, con `replay_at`; `/api/estadisticas?mode=replay` devolvió 10 y cuatro ventanas horarias.
+- Pendientes: demostrar idempotencia del replay, comportamiento de errores, panel en navegador, calidad con cifras, conclusiones y rendimiento. Siguiente comando: repetir replay limitado a 10 y comparar contadores.
+
+## Bloque 3 — aceptación, análisis y entrega (15-11-2026)
+
+- Reenviar replay dejó 10 versiones y 10 eventos replay; histórico permaneció en 18.302. `tests/acceptance.py` pasó antes y después de reiniciar consumidor. Los cinco servicios están saludables tras `docker compose up --build -d consumer`.
+- Periodicidad observada: runs live a 00:58:46 y 00:59:46 UTC. Un proceso aislado con URL cerrada reintentó dos veces y terminó con error explícito; la recuperación dentro del mismo proceso ante un fallo USGS real no se provocó.
+- Calidad: `python tools/quality_2025.py` dio 18.302 originales, cero duplicados, magnitudes/profundidades nulas, tipos no sísmicos o coordenadas inválidas en el conjunto filtrado. SQL preparado: 18.302 eventos, 14.350 sin país y 13.689 de profundidad <70 km. Tres conclusiones y comparación 19 recientes ≥4 frente a 18.302/365 en `docs/ANALISIS-CALIDAD.md`.
+- Rendimiento observado con 100/500/1.000 features: 0,034/0,175/0,381 ms y 1,3/4,4/8,9 KiB de pico Python. Índice temporal 0,070 ms frente a recorrido secuencial forzado 6,622 ms en una consulta horaria. Detalles y costes supuestos en `docs/ANALISIS-COMPLEJIDAD-COSTES.md`.
+- Migración nueva corrigió solo el contador heredado del run histórico completo: 16.302 → 18.302, derivado de sus versiones persistidas. Consulta posterior confirmó `records_seen=records_accepted=18.302`.
+- Archivos de este bloque: `.env.example`, `compose.yaml`, `producer/src/main.py`, `producer/src/measure_transform.py`, `consumer/src/batch.py`, migración, frontend, `tests/acceptance.py`, `tools/quality_2025.py`, `README.md`, documentos de `docs/` y tareas Spec Kit. `npm run build` pasó; `git diff --check` sin errores de espacios.
+- Comprobación visual bloqueada: el navegador de pruebas no estaba disponible (`agent.browsers.list()` = `[]`). Netlify/ngrok requieren URL y cuenta de David. La publicación y la prueba desde otro dispositivo quedan pendientes. No se marcan T005/T006 de 003 como comprobadas.
+- Decisiones: se mantuvieron filtros y tratamientos de specs/FAQ; replay separado en tablas para cumplir aislamiento. Ninguna decisión nueva de transformación abierta. Siguiente comando local: `docker compose ps`; para aceptación reproducible: `python tests/acceptance.py`; para publicación, seguir `README.md` y `docs/ACEPTACION.md`.
+
+## Resumen por hito
+
+| Hito | Estado verificado | Pendiente |
+|---|---|---|
+| 001 | Evidencias sintéticas previas publicadas en `main`; no se rehizo. | Nada de este hito en esta tarea. |
+| 002 | Live, geografía, versiones, cuarentena e histórico corregido de 18.302. Batch reanudable probado con enero. | Casillas de pruebas específicas aún abiertas en `tasks.md`; no inferirlas de la aceptación general. |
+| 003 | Cinco servicios, API, replay aislado, build Angular, análisis, pruebas automáticas y comprobación visual parcial comunicada por David. | Resto de revisión visual, Netlify/ngrok y acceso desde otro dispositivo. |
+
+Las casillas de `specs/002-ingesta-usgs-persistencia/tasks.md` y
+`specs/003-entrega-completa/tasks.md` indican el trabajo aún abierto. La
+evidencia de aceptación y los pasos manuales están en `docs/ACEPTACION.md`.
+
+## Bloque 4 — cierre técnico local y publicación preparada (16-11-2026)
+
+- Los 18.302 corresponden al manifiesto corregido de 12 meses, mundo,
+  magnitud ≥4, tipo `earthquake`, año 2025 UTC: 18.302 versiones y 18.302 IDs,
+  sin sintéticos ni valores fuera de filtros. El estado live tenía 601 IDs al
+  consultar la base y cero IDs históricos sustituidos por live; replay, 10 IDs
+  en tablas propias. No se repitió la descarga ni el batch anual.
+- Comparación corregida: magnitud efectiva ≥4 en ambos conjuntos, live actual
+  sin sintéticos frente a instantánea `historical_initial`; al comprobar la
+  ventana de 24 horas había 23 eventos comparables. Se corrigió la interpretación
+  UTC de los campos del panel y el formato en ms de `last_ingestion`.
+- Se añadieron distribuciones de magnitud y profundidad, con nulos visibles.
+  `npm run build`, sintaxis Python, `docker compose config --quiet`, aceptación
+  HTTP y cinco servicios `healthy` pasaron durante el cierre.
+- David eligió menor `ADM0_A3` con marca de ambigüedad, retención live de 30
+  días y aviso de ingesta tras 10 minutos. Implementación y motivos en
+  `docs/ANALISIS-CALIDAD.md`; no hubo coincidencias geográficas múltiples en
+  las filas actuales.
+- Frontend local iniciado en `http://127.0.0.1:4200/`; API en
+  `http://127.0.0.1:8000`. Navegador no disponible (`[]`): captura visual,
+  fallo/recuperación de API y revisión desde otro dispositivo siguen pendientes.
+  ngrok no está instalado en PATH y faltan sus URL HTTPS y la URL de Netlify;
+  no se ha publicado ni hecho commit/push.
+
+## Rúbrica y aceptación al cierre
+
+| Criterio | Evidencia local | Pendiente real |
+|---|---|---|
+| Extracción | Histórico filtrado y manifestado; feed periódico y catálogo geográfico; tipos, unidades y errores documentados. | Ninguno local de la rúbrica. |
+| Calidad | Seis dimensiones, antes/después, reglas y rechazos controlados en `ANALISIS-CALIDAD.md`. | Captura de filtros para la defensa. |
+| Modelado | Grano actual/versión, claves, índices, unión por polígono, idempotencia y replay separado en `MODELO-DATOS.md`. | Ninguno local de la rúbrica. |
+| Análisis | País/hora, distribuciones, comparación ≥4 equivalente y tres conclusiones fechadas. | Inspección visual de gráficos y mapa. |
+| Reflexión | Tres tamaños de medición, índice frente a secuencial, costes y escalado en `ANALISIS-COMPLEJIDAD-COSTES.md`. | Ninguno local de la rúbrica. |
+
+La aceptación automática y los escenarios ya observados constan en
+`ACEPTACION.md`. Quedan sin observar visualmente el panel, el aviso y la
+recuperación al fallar la API/túnel; también el acceso remoto a Netlify/ngrok.
+No se elevan esas pruebas a superadas por el build o por respuestas HTTP.
+
+## Bloque 5 — filtros, panel y recuperación (16-11-2026)
+
+- La captura descrita con `USA` y 188 eventos globales es compatible con un
+  valor escrito sin aplicar; no se sabe si se pulsó el botón. El código anterior
+  no lanzaba la consulta al editar y las pruebas no reprodujeron un fallo al
+  aplicarla. Se corrigió la falta de claridad: valores editados y
+  aplicados separados, aviso de cambios pendientes, limpieza, selector de país
+  por nombre/código, categoría sin país y ventana UTC compartida por endpoints.
+- El panel conserva Leaflet, recuadra resultados al aplicar, muestra carga
+  discreta, cuatro gráficos compactos con unidades y horas UTC, tabla más
+  legible y explicación/tiempos de REPRODUCCIÓN. API: `UNASSIGNED` filtra
+  `country_id IS NULL` en live e histórico.
+- HTTP con ventana fija: USA 146 actuales/71 históricos, ESP 0/1, magnitud ≥4
+  24/18.302, USA+≥4 0/71, sin país 30/14.350. Los totales, filtros,
+  distribuciones y comparación coincidieron. Son recuentos de una ejecución;
+  el feed live cambia. `tests/filter_contract.py`, aceptación previa,
+  `frontend/tests/filter-query.mjs` y `frontend/tests/component-state.mjs`
+  pasaron, igual que el build Angular.
+- Versión fuera de orden probada en transacción revertida: 1000→3000→2000,
+  repetición de 2000; estado 3000 y tres versiones. Sin registros de prueba
+  persistidos. API detenida y arrancada: fallo HTTP observado, frontend 200,
+  recuperación HTTP y cinco servicios `healthy` al terminar. La prueba de
+  estado del componente observó aviso y `lastRead` conservado con red simulada.
+  Falta confirmar la presentación visual con captura; no se marcó T005 como
+  superada ni se repitió el histórico. Sin commit ni push.
+
+## Bloque 6 — versión servida y REPRODUCCIÓN (16-11-2026)
+
+- David observó en la versión antigua USA **aplicado** con 142 eventos y
+  puntos en Estados Unidos. Su consulta REPRODUCCIÓN de noviembre de 2026 dio
+  cero y la de enero de 2025 dio diez globales; USA no estaba aplicado en esa
+  última vista. No se atribuye a esos diez puntos un fallo del filtro.
+- Causa de los controles antiguos: `ng serve` seguía entregando un `main.js`
+  anterior pese a que los fuentes y el build nuevos existían. Se identificó
+  por PID/comando y se reinició solo ese servidor con `--poll 2000`. El nuevo
+  recurso HTTP contiene `countryOptions`, `appliedLabel` y la ruta de botón
+  actual; una edición posterior se publicó sin reiniciar. README actualizado
+  para instalación limpia en Windows y para recarga forzada de pestaña.
+- REPRODUCCIÓN: texto en pantalla aclara terremotos reales antiguos,
+  separación por Kafka, filtro por fecha original y fecha de reenvío UTC.
+  El aviso de ingesta live atrasada queda reservado a «Datos reales».
+  API y estado del componente verificaron filtro USA **aplicado** en replay:
+  0 eventos frente a diez globales; reparto global `UNASSIGNED` 7, `ETH` 2,
+  `ARG` 1. Noviembre de 2026 devuelve cero por usar tiempo original.
+- Build y pruebas HTTP/componente pasaron; los cinco servicios permanecen
+  saludables. No hubo navegador automatizado para inspeccionar visualmente la
+  nueva versión. No se descargó ni procesó de nuevo el histórico; sin commit
+  ni push.
+
+## Bloque 7 — cierre de entrega local (16-11-2026)
+
+- David comunica que **observó en navegador** la versión nueva en
+  `http://127.0.0.1:4200/`: «País», «Filtros aplicados» y explicación de las
+  dos fechas. En REPRODUCCIÓN de enero de 2025, USA aplicado mostró 0 y Todos
+  los países aplicado mostró 10. No lo observó el agente en navegador; las
+  pruebas de HTTP/componente se documentan por separado.
+- README revisado para una instalación Windows nueva: dos ventanas de
+  PowerShell, cinco servicios Compose, comprobación `/api/salud`, `npm ci`,
+  `ng serve` con sondeo, y distinción entre live y replay. Los originales
+  históricos no se incluyen en Git, por lo que una instalación nueva requiere
+  su carga separada para la comparación.
+- Auditoría Git: 55 candidatos locales, cero staged, tamaño máximo 17.087
+  bytes. `.env`, credenciales reales detectables por patrones, originales
+  históricos, `node_modules` y builds no figuran entre candidatos. La ruta
+  SPA, el build y `config.json` local están preparados; faltan la URL HTTPS de
+  ngrok y el origen HTTPS exacto de Netlify. ngrok no está en `PATH`.
+- Pendientes: revisar visualmente gráficos, tabla y aviso al fallar la API;
+  activar túnel y publicar/verificar ambas URLs. No se hizo commit ni push ni
+  se repitió la carga histórica.
+- Comprobación final breve: build Angular, contrato de filtros, estado del
+  componente, aceptación y `git diff --check` con exit 0; cinco servicios
+  `running` y `healthy`. Se corrigió una sección antigua de pendientes en
+  `docs/ACEPTACION.md` que aún pedía la prueba visual ya comunicada por David.
+  Salud API y frontend local respondieron HTTP 200 en menos de 5 segundos; el
+  build contiene `index.html`, `config.json` y `_redirects`.
+
+## Bloque 8 — túnel HTTPS y artefacto para Netlify (16-11-2026)
+
+- `frontend/public/config.json` usa `mode=api`,
+  `apiUrl=https://sapling-unlearned-blush.ngrok-free.dev` y
+  `skipNgrokWarning=true`. El componente envía
+  `ngrok-skip-browser-warning: 1` a eventos y estadísticas; el encabezado
+  también aparece en el JavaScript compilado.
+- `npm run build` terminó con exit 0 bajo un límite de 120 s; Angular informó
+  3,716 s de generación. Persiste la advertencia CommonJS de Leaflet. En
+  `frontend/dist/observatorio/browser` se comprobaron el `config.json` con
+  la misma URL HTTPS, `index.html` con recursos del build y `_redirects` con
+  `/* /index.html 200`. No hubo coincidencias de `localhost` ni `127.0.0.1`
+  en la configuración y redirección que se subirían.
+- Consultas GET por el túnel con el encabezado de ngrok: `/api/salud` HTTP 200,
+  `service=api`, `state=ready`, última ingesta
+  `2026-11-16T17:00:15.751758+00:00`; `/api/eventos` HTTP 200,
+  `FeatureCollection` live, 178 features y total 178; `/api/estadisticas`
+  HTTP 200, 178 eventos, 24 horas, 8 países y 18.302 eventos históricos
+  comparables. Los recuentos live son una instantánea y pueden variar.
+- Incidencia previa a la prueba desde Netlify: `CORS_ORIGINS` del contenedor
+  API contiene solo `http://localhost:4200,http://127.0.0.1:4200`.
+  Un preflight por el túnel desde un origen Netlify de prueba recibió HTTP 400.
+  Falta añadir el origen HTTPS exacto que asigne Netlify y reiniciar la API;
+  después hay que verificar preflight y panel desde el sitio publicado.
+  No se ha comprobado Netlify ni se ha hecho commit o push. No se repitió
+  la ingesta histórica.
+
+## Bloque 9 — diagnóstico y corrección de mapa vacío en Netlify (16-11-2026)
+
+- La API autenticada de Netlify confirmó que el despliegue
+  `6afb43dd955ba50ee86baace` es el publicado y está `ready`. Sus archivos
+  `/config.json` y `/index.html` tienen SHA-1 `62919ca0d7911685a67ce6752676520c6db0a7a1`
+  y `4a9e073e0e4a0286a63b37a0ea69a7a0787fe989`, respectivamente;
+  coinciden con los archivos locales del build. Por ello el `config.json`
+  publicado usa `mode=api`, el túnel HTTPS indicado y
+  `skipNgrokWarning=true`. Sin sesión, tanto la URL principal como la del
+  despliegue devolvieron HTTP 401 para `/` y `/config.json`, con una página
+  `Login Redirect` de Netlify Edge Access. La publicación está lista, pero
+  el acceso público no quedó verificado.
+- Antes de la corrección, ngrok mostraba
+  `https://sapling-unlearned-blush.ngrok-free.dev` → `http://localhost:8000`;
+  el puerto local 8000 respondía HTTP 200. Por el túnel y con
+  `ngrok-skip-browser-warning: 1`, salud devolvió 200/`ready`, eventos 200
+  con 200 features y estadísticas 200 con recuento 200. Los preflights
+  OPTIONS de los dos endpoints desde ambos orígenes exactos de Netlify
+  devolvieron HTTP 400 `Disallowed CORS origin`: causa concreta que impedía
+  al navegador cargar los datos.
+- Se añadió a `.env` ambos orígenes HTTPS de Netlify, conservando
+  `http://localhost:4200` y `http://127.0.0.1:4200`, y se recreó solo
+  `api` con `docker compose up -d --no-deps --force-recreate api`. La API
+  quedó `healthy`; ngrok siguió apuntando al puerto 8000. Después, los
+  preflights de eventos y estadísticas desde ambos orígenes dieron HTTP 200
+  con `Access-Control-Allow-Origin` exacto. Los GET con origen y encabezado
+  de ngrok dieron HTTP 200 y el mismo encabezado CORS. El preflight del
+  origen local también siguió en 200.
+- En una muestra tras la corrección: 200 features, 200 IDs únicos y 200
+  coordenadas aptas para dibujar; `metadata.total=200`,
+  `estadisticas.count=200`, suma por país/hora/magnitud/profundidad=200.
+  El componente usa ese recuento para puntos e indicador y limita la tabla
+  a las primeras 100 filas. Una consulta posterior devolvió 199, coherente
+  con el feed live y la ventana móvil. No hubo navegador disponible (`[]`),
+  así que la concordancia visual del panel queda para David. El acceso
+  sin sesión a Netlify sigue dando 401; no se cambió el despliegue ni sus
+  ajustes de acceso. No se repitió el histórico ni se hizo commit o push.
+
+## Punto de reanudación para otro agente (16-11-2026)
+
+- **Rama y Git.** Trabajar en `002-ingesta-usgs-persistencia`; `main` no se ha
+  fusionado. Al iniciar esta verificación el HEAD era `a1fe0f7` y no había
+  staging. La auditoría de 56 candidatos encontró cero archivos binarios,
+  cero archivos mayores de 1 MiB y cero coincidencias de patrones de
+  secretos de alta confianza. `.env`, `.netlify/`, originales históricos, volúmenes locales,
+  `node_modules` y builds quedan fuera de Git. Comprobar `git status` y el
+  hash final del cierre al retomar.
+- **Arquitectura y arranque.** `compose.yaml` define cinco servicios:
+  `producer` (USGS → Kafka), `kafka`, `consumer` (validación/geografía →
+  PostgreSQL), `postgres` y `api` (FastAPI). Angular/Leaflet se sirve por
+  Netlify; ngrok en el PC lleva HTTPS a `127.0.0.1:8000`. En Windows nuevo:
+  copiar `.env.example` a `.env`, configurar el origen Netlify real, ejecutar
+  `docker compose config --quiet`, `docker compose up --build -d`,
+  `docker compose ps`; en `frontend/`, `npm ci` y `npm run build` o `npm start
+  -- --host 127.0.0.1 --poll 2000`. Los originales históricos están fuera de
+  Git; no lanzar `load-historical` ni `process-historical` para esta revisión.
+  La guía se contrastó con Compose y build, pero no se ejecutó una instalación
+  limpia en otro equipo Windows.
+- **URLs y configuración.** Panel principal público
+  `https://stellar-basbousa-cee41b.netlify.app/`, despliegue
+  `https://6afb43dd955ba50ee86baace--stellar-basbousa-cee41b.netlify.app/`,
+  API `https://sapling-unlearned-blush.ngrok-free.dev`, salud `/api/salud`.
+  Ambas páginas y ambos `config.json` respondieron HTTP 200 sin sesión; el
+  JSON público usa esa base HTTPS. La ruta SPA de prueba respondió 200.
+  El `.env` **local** conserva los dos orígenes de desarrollo y autoriza el
+  principal y el del despliegue; nunca incluir `.env` en Git. ngrok confirmó
+  destino `http://localhost:8000`. El sitio sirve el HTML aun si el backend
+  local se apaga, pero los datos requieren PC, Docker y túnel activos.
+- **Decisiones de David.** Varias coincidencias geográficas: menor
+  `ADM0_A3` y marca de ambigüedad; originales live: retención de 30 días;
+  aviso de frescura: 10 minutos. El replay usa topic y tablas separados,
+  conserva fecha original y fecha de reenvío. David comunicó la revisión
+  anterior de filtros USA/replay y aportó ahora capturas en incógnito de mapa
+  con círculos, indicador 192, gráficos por país/hora y tabla con filas;
+  enlaces y atribución en `docs/ACEPTACION.md`.
+- **Pruebas de esta sesión.** Cinco servicios `healthy`, Compose válido, API
+  local/túnel con salud/eventos/estadísticas HTTP 200; CORS OPTIONS desde el
+  origen principal HTTP 200 para ambos endpoints y encabezado de ngrok.
+  Ventana UTC compartida `min_mag=4`: eventos=estadísticas=13, histórico
+  comparable=18.302; replay enero 2025=10. SQL confirmó 18.302 históricos,
+  783 live reales acumulados y 10 replay separados. `npm run build` (límite
+  120 s), aceptación, contrato de filtros, dos pruebas Node y secuencia fuera
+  de orden con rollback: exit 0. La captura de David coincide con los
+  recuentos de la ejecución local (USA 163, sin país 20). El navegador del
+  agente no estuvo disponible (`[]`); no atribuirle la prueba visual.
+- **Corrección durante el cierre.** El productor consultaba USGS cada minuto,
+  pero la API confundía última consulta correcta con último run del
+  consumidor. Cuando `published=0` mostraba falsa antigüedad. El productor
+  guarda ahora atómicamente `latest-live-fetch.json` (ignorado por Git); la
+  API lo lee mediante mount de solo lectura. Se reconstruyeron únicamente
+  productor y API; salud separa `source_last_fetch` e `ingestion`, y eventos
+  publica `last_ingestion` desde la consulta USGS. Se observó avance de la
+  marca con `published=0`. No se repitió ninguna carga histórica.
+- **Rúbrica.** Extracción: fuentes, automatización, tipos y unidades en
+  README/diccionario y manifestación previa de 12 meses. Calidad: seis
+  dimensiones, antes/después, reglas y límites en `ANALISIS-CALIDAD.md`.
+  Modelado: grano, claves, unión por polígono, índices e idempotencia en
+  `MODELO-DATOS.md` y prueba fuera de orden. Análisis: ventana, distribuciones,
+  comparación equivalente y tres conclusiones fechadas; HTTP y capturas de
+  David confirman parte del panel. Reflexión: tres tamaños, índice frente a
+  secuencial, costes supuestos y límites en
+  `ANALISIS-COMPLEJIDAD-COSTES.md`. Las mediciones históricas y de rendimiento
+  se revisaron como evidencia previa, sin repetir las cargas.
+- **Pendientes y siguiente acción exacta.** T005/T006 siguen abiertos solo
+  para ver completas las distribuciones y el aviso visual al cerrar/reabrir
+  ngrok, y probar el sitio desde otro dispositivo. David debe abrir la URL
+  principal en otro dispositivo con el PC, los cinco servicios y ngrok activos,
+  comprobar mapa/indicador/tabla y guardar una captura; después provocar una
+  caída controlada del túnel, observar aviso y recuperación, y reabrirlo.
+  No instalar Hugo ni modificar el despliegue por fallos antiguos. No hay
+  evidencia de disponibilidad permanente fuera del equipo local.

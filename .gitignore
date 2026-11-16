@@ -20,10 +20,14 @@ evidence/001-minimal-kafka-flow/*
 !evidence/001-minimal-kafka-flow/README.md
 !evidence/001-minimal-kafka-flow/selected/
 !evidence/001-minimal-kafka-flow/selected/**
+evidence/002-ingesta-usgs-persistencia/*
+!evidence/002-ingesta-usgs-persistencia/.gitkeep
+!evidence/002-ingesta-usgs-persistencia/README.md
 *.log
 
 # Docker and editor state
 .docker/
+.netlify/
 .pytest_cache/
 .vscode/
 .idea/

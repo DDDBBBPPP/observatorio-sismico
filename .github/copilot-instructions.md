@@ -56,6 +56,9 @@
 - No marques una prueba como superada porque el comportamiento esté programado: ejecútala y registra el resultado observado.
 - Si una comprobación no puede ejecutarse, indica el motivo, el alcance de la limitación y el siguiente paso necesario.
 - Conserva los rechazos y sus motivos cuando el consumidor descarte datos, y documenta las dimensiones de calidad, resultados, acciones y limitaciones.
+- Al cerrar cada incremento sustancial, actualiza `docs/ESTADO-PROYECTO.md`
+  distinguiendo planificado, implementado y comprobado. Las casillas de
+  `tasks.md` siguen siendo la fuente de verdad.
 
 ## Referencias de trabajo
 
