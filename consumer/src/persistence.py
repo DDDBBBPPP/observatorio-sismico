@@ -292,6 +292,30 @@ def persist_quarantine(
         connection.commit()
 
 
+def persist_bad_message(connection: psycopg.Connection, topic: str, partition: int,
+                        offset: int, reason: str, raw: bytes) -> None:
+    """Record a poison Kafka message independently of its untrusted envelope."""
+    run_id = f"quarantine-{topic}-{partition}-{offset}"
+    now = datetime.now(timezone.utc)
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO ingestion_run (run_id, source, load_type, mode, started_at,
+                                       finished_at, status, records_seen, records_rejected)
+            VALUES (%s, 'usgs', 'kafka_quarantine', 'live', %s, %s, 'completed', 1, 1)
+            ON CONFLICT (run_id) DO NOTHING
+        """, (run_id, now, now))
+        cursor.execute("""
+            INSERT INTO quarantine_record (run_id, source_response_id, event_id, stage,
+                                           reason_code, reason_detail, created_at,
+                                           original_jsonb, payload_reference)
+            SELECT %s, NULL, NULL, 'kafka', %s, %s, %s, %s, %s
+            WHERE NOT EXISTS (SELECT 1 FROM quarantine_record WHERE run_id=%s)
+        """, (run_id, reason, "invalid Kafka message", now,
+              json.dumps({"raw_utf8": raw.decode("utf-8", errors="replace")[:10000]}),
+              f"{topic}:{partition}:{offset}", run_id))
+    connection.commit()
+
+
 def persist_replay_event(connection: psycopg.Connection, payload: dict, country: dict) -> str:
     event = payload["event"]
     properties = event["properties"]

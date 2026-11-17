@@ -6,7 +6,7 @@ import type { FeatureCollection, Point } from 'geojson';
 import { buildQuery, emptyFilters, type FilterState } from './filter-query';
 
 type Properties = { mag: number | null; place: string | null; time: number; updated: number; country_id?: string | null; country_name?: string | null; replay_at?: string | null };
-type Events = FeatureCollection<Point, Properties> & { metadata?: { generated?: number; mode?: string; total?: number; truncated?: boolean; last_ingestion?: number | null; filters?: { country_id: string | null; min_mag: number | null } } };
+type Events = FeatureCollection<Point, Properties> & { metadata?: { generated?: number; mode?: string; total?: number; truncated?: boolean; last_source_fetch?: number | null; filters?: { country_id: string | null; min_mag: number | null } } };
 type Config = { mode: 'demo' | 'api'; apiUrl: string; refreshMs: number; skipNgrokWarning: boolean };
 type Bin = { label: string; count: number };
 type Country = { code: string; name: string };
@@ -23,6 +23,7 @@ export class AppComponent implements OnDestroy {
   readonly lastRead = signal('Sin lectura');
   readonly generated = signal('Sin información');
   readonly lastIngestion = signal('Sin información');
+  readonly latestEvent = signal('Sin eventos en el filtro');
   readonly count = signal(0);
   readonly omitted = signal(0);
   readonly countriesStatus = signal('Cargando catálogo');
@@ -146,10 +147,11 @@ export class AppComponent implements OnDestroy {
       this.lastRead.set(new Date().toISOString());
       this.generated.set(this.date(data.metadata?.generated));
       this.tableEvents.set(data.features.slice(0, 100));
-      const ingestion = data.metadata?.last_ingestion;
-      this.lastIngestion.set(ingestion ? this.date(ingestion) : 'Sin ingesta confirmada');
-      this.apiStale.set(selected.viewMode === 'live' && ingestion && Date.now() - ingestion > 10 * 60 * 1000
-        ? 'Aviso: la última ingesta live supera 10 minutos.' : '');
+      this.latestEvent.set(data.features.length ? this.date(data.features[0].properties.time) : 'Sin eventos en el filtro');
+      const sourceFetch = data.metadata?.last_source_fetch;
+      this.lastIngestion.set(sourceFetch ? this.date(sourceFetch) : 'Sin consulta confirmada');
+      this.apiStale.set(selected.viewMode === 'live' && sourceFetch && Date.now() - sourceFetch > 10 * 60 * 1000
+        ? 'Aviso: la última consulta USGS correcta supera 10 minutos.' : '');
       this.stats.set(summary);
       this.applied.set({ ...selected });
       this.status.set(config.mode === 'demo' ? 'Ejemplo estático: no representa actividad real' : selected.viewMode === 'replay' ? 'REPRODUCCIÓN · consulta completada' : 'API accesible · consulta completada');

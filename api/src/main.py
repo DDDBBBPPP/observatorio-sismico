@@ -78,6 +78,7 @@ def last_ingestion(cursor) -> dict[str, Any] | None:
         SELECT run_id, finished_at, records_accepted, records_rejected, mode
         FROM ingestion_run
         WHERE source = 'usgs' AND load_type = 'live_feed' AND status = 'completed'
+          AND run_id NOT LIKE 'controlled-%'
         ORDER BY finished_at DESC NULLS LAST
         LIMIT 1
         """
@@ -215,6 +216,7 @@ def events(
             "metadata": {
                 "generated": int(datetime.now(timezone.utc).timestamp() * 1000),
                 "last_ingestion": last_source_fetch_ms(last_source_fetch(), ingestion),
+                "last_source_fetch": last_source_fetch_ms(last_source_fetch(), None),
                 "mode": mode,
                 "count": len(features),
                 "total": total,

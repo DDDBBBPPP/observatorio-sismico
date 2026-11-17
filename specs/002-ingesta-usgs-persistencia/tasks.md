@@ -256,6 +256,27 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
   antigüedad y refresco de 60 segundos.
 - [ ] T054 Ejecutar aceptación integrada y completar documentación de entrega.
 
+### Revisión del PR #1 (18-11-2026)
+
+- [x] T055 Usar `event_id` como clave Kafka en live y replay; verificar el
+  contrato del mensaje y mantener lectura de sobres anteriores.
+- [x] T056 Validar cobertura, originales, recuentos y versiones del manifiesto
+  histórico real; reconocer el run antiguo completado sin checkpoints y sin
+  repetir sus 18.302 registros.
+- [x] T057 Probar versión duplicada, posterior, antigua, reinicio y mensaje
+  defectuoso en Kafka; confirmar cuarentena y continuidad del consumidor.
+- [x] T058 Referenciar con SHA-256 el GeoJSON original completo para no
+  repetirlo en cada mensaje live; conservar Feature y procedencia verificable.
+- [x] T059 Mejorar panel Angular y aclarar última consulta USGS frente al
+  último terremoto del filtro; build local y pruebas de filtros superados.
+- [x] T060 Crear comprobador cada cinco minutos y realizar muestra breve.
+- [ ] T061 Observar las 24 horas completas, revisar el archivo JSONL y evaluar
+  salud, errores, recuentos y retraso sin declarar éxito antes de tiempo.
+- [ ] T062 Capturar y revisar visualmente el antes/después en navegador; el
+  navegador integrado no estuvo disponible en esta sesión.
+- [ ] T063 Si se publica el nuevo frontend, desplegar Netlify y comprobar la
+  web pública. El build local no equivale a ese despliegue.
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

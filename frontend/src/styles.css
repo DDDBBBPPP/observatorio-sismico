@@ -1,1 +1,3 @@
-body { margin: 0; background: #eef3f6; color: #132b40; font-family: system-ui, sans-serif; } * { box-sizing: border-box; } .leaflet-popup-content { white-space: pre-line; }
+body { margin: 0; background: #f3f1ec; color: #16313d; font-family: 'Segoe UI', system-ui, sans-serif; } * { box-sizing: border-box; } .leaflet-popup-content { white-space: pre-line; }
+html { scroll-behavior: smooth; }
+::selection { background: #c5ece5; color: #103c42; }

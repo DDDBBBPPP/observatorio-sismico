@@ -5,14 +5,11 @@ from pathlib import Path
 from geography import CountryCatalog
 from persistence import connect, ensure_schema, finish_ingestion_run, persist_live_event, persist_quarantine, start_ingestion_run
 from validation import validate_live_event
+from batch_manifest import validate_manifest
 
 
 def process_manifest(path: str, max_intervals: int | None = None, run_suffix: str = "") -> dict:
-    manifest = json.loads(Path(path).read_text(encoding="utf-8"))
-    assert manifest["filters"]["minmagnitude"] == 4
-    assert manifest["filters"]["eventtype"] == "earthquake"
-    intervals = manifest["intervals"]
-    assert len(intervals) == 12 and sum(i["record_count"] for i in intervals) == 18302
+    manifest, intervals, manifest_total = validate_manifest(path)
     run_id = f"historical-{manifest['year']}-minmag4-earthquake{run_suffix}"
     connection = connect()
     try:
@@ -24,10 +21,18 @@ def process_manifest(path: str, max_intervals: int | None = None, run_suffix: st
         with connection.cursor() as cursor:
             cursor.execute("SELECT status, records_seen FROM ingestion_run WHERE run_id=%s", (run_id,))
             prior = cursor.fetchone()
-            cursor.execute("SELECT count(*) FROM historical_interval_checkpoint WHERE run_id=%s", (run_id,))
-            completed_intervals = cursor.fetchone()[0]
-            if prior and prior[0] == "completed" and (completed_intervals == len(intervals) or
-                (completed_intervals == 0 and prior[1] == 18302)):
+            cursor.execute("SELECT interval_start, record_count FROM historical_interval_checkpoint WHERE run_id=%s", (run_id,))
+            checkpoints = dict(cursor.fetchall())
+            expected = {item["interval_start"]: item["record_count"] for item in intervals}
+            if any(expected.get(start) != count for start, count in checkpoints.items()):
+                raise ValueError("Checkpoints incompatibles con el manifiesto")
+            complete_checkpoints = checkpoints == expected
+            legacy_complete = False
+            if prior and prior[0] == "completed" and not checkpoints and prior[1] == manifest_total:
+                cursor.execute("SELECT count(*), coalesce(sum(record_count),0) FROM source_response WHERE run_id=%s", (run_id,))
+                response_count, response_total = cursor.fetchone()
+                legacy_complete = response_count == len(intervals) and response_total == manifest_total
+            if prior and prior[0] == "completed" and (complete_checkpoints or legacy_complete):
                 result = {"run_id": run_id, "status": "already_completed", "intervals": len(intervals)}
                 print(json.dumps(result), flush=True)
                 return result

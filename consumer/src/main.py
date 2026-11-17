@@ -8,9 +8,9 @@ from pathlib import Path
 
 from aiokafka import AIOKafkaConsumer
 
-from persistence import connect, ensure_schema, persist_live_event, persist_quarantine, persist_replay_event, prune_live_response_payloads
+from persistence import connect, ensure_schema, persist_bad_message, persist_live_event, persist_replay_event, prune_live_response_payloads
 from geography import CountryCatalog
-from validation import validate_live_event
+from message_contract import original_for, validate_envelope
 from batch import process_manifest
 
 
@@ -41,8 +41,13 @@ async def serve() -> None:
                 if time.monotonic() - last_prune > 86400:
                     prune_live_response_payloads(connection)
                     last_prune = time.monotonic()
-                payload = json.loads(message.value.decode("utf-8"))
-                if (
+                try:
+                    payload = json.loads(message.value.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    persist_bad_message(connection, message.topic, message.partition, message.offset, "invalid_json", message.value)
+                    await consumer.commit()
+                    continue
+                if isinstance(payload, dict) and (
                     payload.get("schema") != "observatorio.test-envelope.v1"
                     or payload.get("source") != "synthetic-test"
                     or payload.get("mode") != "test"
@@ -51,15 +56,15 @@ async def serve() -> None:
                     if message.topic not in {LIVE_TOPIC, REPLAY_TOPIC}:
                         await consumer.commit()
                         continue
-                    valid, reason = validate_live_event(payload.get("event") or {})
-                    if not valid:
-                        persist_quarantine(connection, payload, reason)
+                    reason = validate_envelope(payload, message.topic, LIVE_TOPIC, REPLAY_TOPIC)
+                    if reason:
+                        persist_bad_message(connection, message.topic, message.partition, message.offset, reason, message.value)
                         await consumer.commit()
                         print(
                             json.dumps(
                                 {
-                                    "run_id": payload["run_id"],
-                                    "event_id": payload.get("event_id"),
+                                    "run_id": payload.get("run_id") if isinstance(payload, dict) else None,
+                                    "event_id": payload.get("event_id") if isinstance(payload, dict) else None,
                                     "status": "quarantined",
                                     "reason": reason,
                                 }
@@ -67,6 +72,13 @@ async def serve() -> None:
                             flush=True,
                         )
                         continue
+                    if message.topic == LIVE_TOPIC:
+                        try:
+                            payload["provenance"]["original"] = original_for(payload)
+                        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+                            persist_bad_message(connection, message.topic, message.partition, message.offset, f"original_unverifiable:{type(exc).__name__}", message.value)
+                            await consumer.commit()
+                            continue
                     coordinates = payload["event"]["geometry"]["coordinates"]
                     country = catalog.assign(float(coordinates[0]), float(coordinates[1]))
                     if message.topic == REPLAY_TOPIC and payload.get("mode") == "replay":
@@ -101,8 +113,10 @@ async def serve() -> None:
                 path.write_text(json.dumps(records, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
                 await consumer.commit()
                 print(json.dumps(records[-1], ensure_ascii=False), flush=True)
-            except (UnicodeDecodeError, json.JSONDecodeError, OSError, TypeError) as exc:
-                print(f"consumer failed to record message: {exc}", file=sys.stderr, flush=True)
+            except Exception as exc:
+                connection.rollback()
+                print(f"consumer failed to record message at {message.topic}:{message.partition}:{message.offset}: {exc}", file=sys.stderr, flush=True)
+                raise
     finally:
         connection.close()
         await consumer.stop()

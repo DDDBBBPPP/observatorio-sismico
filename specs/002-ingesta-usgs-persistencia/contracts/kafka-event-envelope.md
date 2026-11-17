@@ -29,3 +29,18 @@ registro de ingesta. El topic live es distinto del topic sintético del hito
 
 La clave Kafka es `event_id`. El consumidor no confirma la posición hasta
 persistir el evento válido o la cuarentena.
+
+En live, el productor envía el `event` original y la procedencia de la
+respuesta, pero no repite la respuesta GeoJSON completa en cada mensaje.
+`provenance.original_reference` señala el archivo de respuesta preservado en
+`/evidence/002-ingesta-usgs-persistencia/originals/` y
+`provenance.original_sha256` verifica sus bytes. El consumidor comprueba el
+hash y que el evento figure en esa respuesta antes de almacenarla una vez en
+`source_response`; cada versión conserva también su Feature original. El
+replay incluye referencia y hash del original histórico. Se siguen leyendo
+sobres live anteriores que llevan `provenance.original` completo.
+
+Los mensajes inválidos se guardan en `quarantine_record` con referencia
+`topic:partition:offset` y se confirma su offset. Los fallos transitorios de
+PostgreSQL interrumpen el consumidor para reintentar tras reinicio; no se
+confirman como si fueran errores de datos.

@@ -1,5 +1,43 @@
 # Aceptación observada — 2026-11-15
 
+## Revisión local de la rama 002 (18-11-2026, Europe/Madrid)
+
+Se verificó primero que Docker tenía los cinco servicios `running/healthy` y
+que el proceso ngrok estaba activo. Se reconstruyeron y recrearon solo
+productor, consumidor y API; Kafka/PostgreSQL conservaron sus volúmenes. No se
+descargó ni procesó de nuevo el histórico.
+
+| Caso | Resultado observado |
+| --- | --- |
+| Manifiesto existente, solo lectura | 12 intervalos, 18.302 registros y 18.302 versiones; run antiguo `completed`, 12 respuestas de 18.302 registros y 0 checkpoints. Cumple la compatibilidad prevista. |
+| Kafka controlado | `controlled-kafka-f1fb375d49fe4b25bdf6d125abc3953a`: versión inicial 1000, posterior 3000 y antigua 2000; actual 3000, tres versiones; repetición de 2000 sin cuarta versión. |
+| Reinicio y mensaje defectuoso | Consumidor reiniciado entre versión inicial y posteriores; JSON roto registrado una vez en cuarentena; consumidor sano después. |
+| Muestra del comprobador | 23:45:25 UTC del 17-11: cinco servicios sanos, última consulta correcta 23:44:26 UTC, live 24 h 236, live acumulado 1.047, histórico 18.302, replay 10, cuarentena 3, errores de consulta 0, retraso Kafka 0. |
+| Pruebas | `tests/acceptance.py`, `tests/filter_contract.py`, prueba fuera de orden con rollback, `tests/consumer_integration.py`, dos pruebas Node y `ng build`: exit 0. Build local Angular con advertencia CommonJS conocida de Leaflet. |
+
+La ejecución acotada final repitió la secuencia Kafka con
+`controlled-kafka-e9b242d1c9b24c7d9d4b814e19dc1c70` y terminó con código 0.
+Una lectura independiente del topic live observó el mensaje real
+`nc75467792` en offset 1202: la clave Kafka era `nc75467792`, el sobre
+compacto no incluía `provenance.original` y el original referenciado pasó
+la verificación SHA-256. En la muestra sintética de 100 eventos, el sobre
+compacto ocupó 691 bytes frente a 22.139 bytes del formato anterior (96,9 %
+menos); es una medición de esa muestra, no una media de producción.
+La muestra posterior de las 23:50:06 UTC registró cinco servicios sanos,
+235 eventos live en 24 horas, 1.048 live acumulados, 18.302 históricos,
+10 replay, 4 cuarentenas, 0 errores de consulta y retraso Kafka 0.
+
+El navegador integrado devolvió `[]`; no hay capturas verificadas de
+antes/después. La web pública de Netlify aún no incorpora este build local.
+La prueba aislada `tests/manifest_validation.py` aceptó un manifiesto válido
+de un solo intervalo con cero registros y rechazó un recuento falso; confirma
+que el batch ya no presupone los valores del histórico guardado.
+La prueba de 24 horas queda **preparada, no superada**; la muestra breve solo
+comprueba que el script escribe datos correctos. Permanecen pendientes la
+comprobación visual en navegador, un nuevo despliegue Netlify si se quiere
+publicar el frontend, la prueba desde otro dispositivo y la observación
+completa de 24 horas.
+
 | Caso | Resultado observado | Evidencia repetible |
 |---|---|---|
 | Cinco servicios | Los cinco `healthy` tras `docker compose up --build -d`; también tras reiniciar consumidor. | `docker compose ps` |

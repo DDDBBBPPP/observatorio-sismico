@@ -1,5 +1,29 @@
 # Estado del proyecto
 
+## Revisión de PR #1 — 18-11-2026
+
+- Rama `002-ingesta-usgs-persistencia`. Cinco servicios sanos y ngrok activo
+  al inicio. PR #1 permanece abierto en borrador; no se fusionó.
+- Kafka live y replay publican con clave `event_id`. Live referencia el
+  original completo mediante ruta y SHA-256, y el consumidor verifica el
+  contenido antes de guardarlo una vez; los mensajes antiguos siguen siendo
+  legibles. El batch valida el manifiesto real sin fijar 12/18.302; el run
+  antiguo completado se reconoce por 12 respuestas y recuento 18.302 aun sin
+  checkpoints. No se repitió el histórico.
+- Prueba controlada Kafka: inicial, nueva, antigua, duplicada, reinicio y JSON
+  roto en cuarentena; consumidor sano. Aceptación, filtros, dos pruebas Node,
+  prueba transaccional y build local Angular pasan. Cinco servicios sanos
+  después de recrear productor/consumidor/API.
+- Panel local rediseñado con marcas temporales separadas, filtros, mapa,
+  indicadores, vista móvil y explicación de «Sin país asignado». El build
+  local **no** actualiza Netlify; queda pendiente nuevo despliegue si se
+  decide publicar.
+- Comprobador de 24 horas preparado. Dos muestras breves sin errores, con
+  retraso Kafka 0; **no** han transcurrido 24 horas. Navegador integrado no
+  disponible (`[]`), por lo que faltan capturas antes/después y validación
+  visual. También quedan pendientes prueba de túnel desde otro dispositivo
+  y observación visual de pérdida/recuperación de la API.
+
 ## Bloque 1 — entorno e histórico (15-11-2026)
 
 - Rama local `002-ingesta-usgs-persistencia`; cambios 002/003 sin commit conservados.

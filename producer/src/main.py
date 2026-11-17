@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import os
 import socket
@@ -82,6 +83,7 @@ async def replay_historical(path: str, limit: int = 10, delay_seconds: float = 0
             if published >= limit:
                 break
             document = json.loads(Path(interval["path"]).read_text(encoding="utf-8"))
+            original_sha256 = hashlib.sha256(Path(interval["path"]).read_bytes()).hexdigest()
             for feature in document["payload"].get("features", []):
                 if published >= limit:
                     break
@@ -105,8 +107,8 @@ async def replay_historical(path: str, limit: int = 10, delay_seconds: float = 0
                         "http_status": document["metadata"]["http_status"],
                         "duration_ms": document["metadata"]["duration_ms"],
                         "record_count": document["metadata"]["record_count"],
-                        "original": feature,
                         "original_reference": interval["path"],
+                        "original_sha256": original_sha256,
                     }
                 )
                 await asyncio.wait_for(
@@ -129,8 +131,8 @@ async def ingest_live() -> int:
     payload, metadata = fetch_feed()
     run_id = f"run-{uuid4().hex}"
     response_id = f"response-{uuid4().hex}"
-    metadata["original"] = payload
     original_path = save_original(payload, metadata, run_id)
+    original_sha256 = hashlib.sha256(original_path.read_bytes()).hexdigest()
     save_latest_live_fetch(metadata, run_id)
     state = IngestionState(original_path.parent.parent / "state.json")
     features, excluded = new_earthquakes(payload, state)
@@ -147,13 +149,15 @@ async def ingest_live() -> int:
                     "http_status": metadata["http_status"],
                     "duration_ms": metadata["duration_ms"],
                     "record_count": metadata["record_count"],
-                    "original": payload,
+                    "original_reference": str(original_path),
+                    "original_sha256": original_sha256,
                 }
             )
             await asyncio.wait_for(
                 producer.send_and_wait(
                     LIVE_TOPIC,
                     json.dumps(message, ensure_ascii=False).encode("utf-8"),
+                    key=feature["id"].encode("utf-8"),
                 ),
                 timeout=PUBLISH_TIMEOUT_SECONDS,
             )

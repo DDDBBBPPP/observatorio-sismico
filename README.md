@@ -8,6 +8,54 @@ consumidor Python y API FastAPI. El panel Angular se ejecuta aparte. Consulta
 [mediciones y costes](docs/ANALISIS-COMPLEJIDAD-COSTES.md) y
 [aceptación](docs/ACEPTACION.md).
 
+## Revisión de la rama 002 y prueba de 24 horas
+
+El sobre Kafka live y replay utiliza `event_id` como clave. Live conserva el
+Feature original en el mensaje y referencia la respuesta GeoJSON completa
+guardada en `evidence/`, con SHA-256. El consumidor verifica referencia,
+integridad y pertenencia del evento antes de guardar la respuesta una sola vez
+en PostgreSQL. Acepta además los sobres antiguos con el GeoJSON integrado.
+Los mensajes malformados se registran en cuarentena por topic, partición y
+offset para que no bloqueen el avance; los errores de base de datos conservan
+el offset sin confirmar. El batch histórico valida el contenido real del
+manifiesto, su cobertura, recuentos y versiones. Un run antiguo `completed`
+sin checkpoints se reconoce por su recuento y las respuestas conservadas.
+Ninguno de estos cambios requiere volver a cargar el histórico existente.
+
+Desde la raíz y con los cinco servicios activos, se puede tomar una muestra
+breve con límite de tiempo:
+
+```powershell
+python tools/monitor_24h.py --once --output evidence/002-ingesta-usgs-persistencia/monitor-smoke.jsonl
+```
+
+Para iniciar la prueba larga en segundo plano sin bloquear PowerShell:
+
+```powershell
+$probe = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('tools/monitor_24h.py','--duration-hours','24','--interval-seconds','300') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput 'evidence/002-ingesta-usgs-persistencia/monitor-24h.stdout.log' -RedirectStandardError 'evidence/002-ingesta-usgs-persistencia/monitor-24h.stderr.log'
+$probe.Id | Set-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.pid
+```
+
+Cada línea de `evidence/002-ingesta-usgs-persistencia/monitor-24h.jsonl`
+contiene fecha UTC, salud de los cinco servicios, última consulta USGS
+correcta, recuentos live/histórico/replay/cuarentena, errores de descarga y
+retraso del grupo consumidor Kafka cuando se puede leer. Consultar la última
+muestra con:
+
+```powershell
+Get-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.jsonl | Select-Object -Last 1
+```
+
+Para detenerla antes de completar las 24 horas:
+
+```powershell
+Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.pid))
+```
+
+El archivo de muestras no acredita 24 horas hasta que abarque el periodo
+completo. El build de `frontend` solo actualiza archivos locales: **Netlify
+requiere un nuevo despliegue** para mostrar los cambios Angular de esta rama.
+
 ## Instalación en Windows
 
 Requisitos: Docker Desktop con motor Linux y Compose v2, PowerShell, Node.js

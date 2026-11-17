@@ -71,7 +71,7 @@ globalThis.fetch = async url => {
   const payload = parsed.pathname.endsWith('/eventos') ? {
     type: 'FeatureCollection', features: selected,
     metadata: { mode, total: selected.length, generated: Date.now(),
-      last_ingestion: Date.now() - 20 * 60 * 1000, filters: { country_id: country, min_mag: minMag ? Number(minMag) : null } }
+      last_source_fetch: Date.now() - 20 * 60 * 1000, filters: { country_id: country, min_mag: minMag ? Number(minMag) : null } }
   } : {
     count: selected.length, filters: { country_id: country, min_mag: minMag ? Number(minMag) : null },
     hourly_utc: [], countries: [], distributions: {
@@ -96,7 +96,7 @@ async function settle() {
 try {
   await app.onMapReady(map);
   assert.equal(app.count(), 2);
-  assert.match(app.apiStale(), /ingesta live/);
+  assert.match(app.apiStale(), /consulta USGS correcta/);
   assert.equal(app.countryOptions().find(item => item.code === 'USA').name, 'Estados Unidos');
   const initialRequests = requests.length;
   app.applyFilter('country', { target: { value: 'USA' } });
