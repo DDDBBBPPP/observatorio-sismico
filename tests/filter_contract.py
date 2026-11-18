@@ -3,6 +3,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from urllib.error import HTTPError
 
 BASE = "http://127.0.0.1:8000"
 end = datetime.now(timezone.utc).replace(microsecond=0)
@@ -24,6 +25,9 @@ for label, extra in (
     ("mag4", {"min_mag": 4}),
     ("USA_mag4", {"country_id": "USA", "min_mag": 4}),
     ("UNASSIGNED", {"country_id": "UNASSIGNED"}),
+    ("depth_0_70", {"min_depth_km": 0, "max_depth_km": 70}),
+    ("depth_70_300", {"min_depth_km": 70, "max_depth_km": 300}),
+    ("depth_negative_to_0", {"min_depth_km": -20, "max_depth_km": 0}),
 ):
     params = {**period, **extra, "mode": "live"}
     events = get("/api/eventos", {**params, "page_size": 5000})
@@ -32,6 +36,8 @@ for label, extra in (
     assert meta["total"] == stats["count"] == len(events["features"]), label
     assert meta["filters"]["country_id"] == stats["filters"]["country_id"] == extra.get("country_id"), label
     assert meta["filters"]["min_mag"] == stats["filters"]["min_mag"] == extra.get("min_mag"), label
+    for key in ("min_depth_km", "max_depth_km"):
+        assert meta["filters"][key] == stats["filters"][key] == extra.get(key), label
     assert len({feature["id"] for feature in events["features"]}) == stats["count"], label
     assert sum(item["count"] for item in stats["countries"]) == stats["count"], label
     assert sum(item["count"] for item in stats["hourly_utc"]) == stats["count"], label
@@ -46,13 +52,21 @@ for label, extra in (
             assert feature["properties"]["country_id"] == extra["country_id"], label
         if extra.get("min_mag") is not None:
             assert feature["properties"]["mag"] >= extra["min_mag"], label
+        depth = feature["geometry"]["coordinates"][2]
+        if "min_depth_km" in extra:
+            assert depth is not None and depth >= extra["min_depth_km"], label
+        if "max_depth_km" in extra:
+            assert depth is not None and depth <= extra["max_depth_km"], label
     comparison = stats["historical_comparison"]
     threshold = max(4, extra.get("min_mag", 4))
     assert comparison["min_mag"] == threshold, label
     past = get("/api/eventos", {**historical, "min_mag": threshold,
+                                **{key: extra[key] for key in ("min_depth_km", "max_depth_km") if key in extra},
                                 **({"country_id": extra["country_id"]} if "country_id" in extra else {}),
                                 "page_size": 1})
     assert comparison["events"] == past["metadata"]["total"], label
+    comparable = get("/api/eventos", {**params, "min_mag": threshold, "page_size": 1})
+    assert comparison["current_window_events"] == comparable["metadata"]["total"], label
     if extra.get("min_mag") == 4:
         assert comparison["current_window_events"] == stats["count"], label
     else:
@@ -82,6 +96,24 @@ for country in replay_stats["countries"]:
                for feature in filtered["features"])
     replay_by_country[code] = country["count"]
 assert sum(replay_by_country.values()) == replay_stats["count"]
+for lower, upper in ((0, 70), (70, 300), (-20, 0)):
+    depth_params = {**replay_params, "min_depth_km": lower, "max_depth_km": upper}
+    filtered = get("/api/eventos", depth_params)
+    filtered_stats = get("/api/estadisticas", depth_params)
+    assert filtered["metadata"]["total"] == filtered_stats["count"] == len(filtered["features"])
+    assert all(lower <= item["geometry"]["coordinates"][2] <= upper for item in filtered["features"])
+    past = get("/api/eventos", {**historical, "min_mag": 4, "min_depth_km": lower,
+                                "max_depth_km": upper, "page_size": 1})
+    assert filtered_stats["historical_comparison"]["events"] == past["metadata"]["total"]
+for route in ("/api/eventos", "/api/estadisticas"):
+    for bad, fragment in (({"min_depth_km": "oops"}, "número finito"),
+                          ({"min_depth_km": 300, "max_depth_km": 70}, "no puede superar"),
+                          ({"min_depth_km": "NaN"}, "número finito")):
+        try:
+            get(route, {**period, **bad})
+            raise AssertionError((route, bad))
+        except HTTPError as exc:
+            assert exc.code == 400 and fragment in json.load(exc)["detail"], (route, bad)
 replay_november = get("/api/eventos", {"mode": "replay", "start": "2026-11-16T00:00:00Z",
                                       "end": "2026-11-17T00:00:00Z"})
 assert replay_november["metadata"]["total"] == 0

@@ -1,5 +1,78 @@
 # Aceptación observada — 2026-11-15
 
+## Profundidad, trazabilidad y capturas reales — 18-11-2026
+
+El contrato acepta `min_depth_km` y `max_depth_km` opcionales e inclusivos en
+ambos endpoints, en live y replay. Negativos válidos pasan; texto, NaN y
+mínimo mayor que máximo devuelven HTTP 400 con explicación. Sin rango se
+conservan los nulos; con límite no coinciden. La base real no contiene hoy
+profundidades nulas (0 de 19.446 filas actuales y 0 de 10 replay), por lo que
+ese caso se comprobó en una **tabla temporal** PostgreSQL: NULL, −2, 0, 70 y
+300 km dieron 5 sin filtro, 2 en 0–70, 2 en 70–300 y 2 en −2–0. La tabla
+temporal se eliminó al cerrar la conexión; no se alteró el histórico.
+
+`tools/audit_depth.py` fijó **2026-11-17 12:22:05–2026-11-18 12:22:05 UTC**
+y comparó `/api/eventos`, `/api/estadisticas` y SQL real. Resultado conservado
+en `evidence/002-ingesta-usgs-persistencia/audit-depth-20261118.json`:
+
+| Modo / profundidad inclusiva | API = estadísticas = PostgreSQL | Comparación 2025 con el mismo rango | Actual ≥4 = SQL |
+| --- | ---: | ---: | ---: |
+| Live / sin rango | 200 | 18.302 | 32 |
+| Live / 0–70 km | 179 | 13.690 | 23 |
+| Live / 70–300 km | 15 | 3.511 | 7 |
+| Live / −20–0 km | 6 | 0 | 0 |
+| Replay enero 2025 / sin rango | 10 | 18.302 | 10 |
+| Replay / 0–70 km | 8 | 13.690 | 8 |
+| Replay / 70–300 km | 2 | 3.511 | 2 |
+| Replay / −20–0 km | 0 | 0 | 0 |
+
+La trazabilidad procede de `/api/salud.trace` y SQL, no de contadores visuales:
+al corte 12:31 UTC hubo **374 revisiones live guardadas**, última versión
+persistida `12:27:58.637002 UTC`, último ID nuevo persistido
+`12:12:45.626185 UTC` y **0 cuarentenas live reales**. Se excluyeron dos
+rechazos de prueba `controlled-*` que una primera consulta había contado.
+La última consulta USGS correcta tiene marca propia del productor. Los
+duplicados descartados y el lag Kafka son `null` en API y «no medido» en el
+panel; no existe contador persistente fiable para ellos. No se invoca Docker
+desde FastAPI ni se añadió una ruta administrativa.
+
+Chrome headless **157.0.8103.79** sobre el build local capturó 16 vistas con
+manifiesto JSON de filtro, ventana UTC, recuento, fecha y viewport en
+`evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/`.
+Los tamaños 375, 768 y 1440 px dieron **0 px de desbordamiento de página**.
+Mapa, gráficos, tabla y API coincidieron; USA tuvo 191 eventos con polígono
+resaltado, Canadá 0 con polígono encuadrado y «Sin país asignado» 15 sin
+polígono en la ventana fija de las conclusiones. Replay 0–70 km dio 8.
+Se detuvo **solo la API**; el navegador mostró el fallo conservando la última
+lectura de 8 replay y se recuperó al reiniciar la API y pulsar «Reintentar».
+Los cinco servicios quedaron sanos. El navegador integrado no ofreció sesión
+(`[]`); la prueba se hizo con Chrome local autorizado.
+
+Las conclusiones revisadas y sus capturas de escritorio/móvil están en
+`docs/ANALISIS-CALIDAD.md`: 14.350/18.302 sin país en 2025;
+13.690/18.302 a 0–70 km inclusivos; 24 eventos ≥4 en
+**2026-11-17 00:43–2026-11-18 00:43 UTC** frente a media 50,14 de 2025.
+El original `all_day` de las 00:43 había mostrado 22; a las 12:34 UTC la BD
+contenía 24 para la misma ventana, por llegadas posteriores. No se infiere
+actividad mundial ni riesgo a partir de porcentajes por país.
+
+### Matriz literal de cinco criterios
+
+| Criterio de `ENUNCIADO.md` | Evidencia observada | Estado |
+| --- | --- | --- |
+| Extracción | Feed periódico, 12 respuestas históricas conservadas, catálogo, tipos/unidades y original con SHA | Comprobado |
+| Calidad | Seis dimensiones y acciones, antes/después, cuarentena, prueba SQL de nulos y rangos | Comprobado |
+| Modelado | Estado/versión, polígono, índices e idempotencia Kafka con reinicio/poison | Comprobado |
+| Análisis | Tres conclusiones con filtros/periodo, 16 capturas, API/BD/gráficos coherentes | Comprobado |
+| Reflexión | Tres tamaños medidos, consulta con/sin índice, memoria, costes y escalado | Comprobado |
+
+**5/5 criterios con evidencia (100 % de cobertura de criterios, no nota).**
+Permanece pendiente T006 de aceptación externa: comprobar desde un segundo
+dispositivo el túnel y su caída/recuperación visual. La prueba de 24 horas no
+se inició ni se declara superada: el PID 15204 se verificó y se detuvo tras
+seis muestras exploratorias (00:50:16–01:15:16 UTC), sin huecos ni errores.
+Su JSONL permanece intacto.
+
 ## Vista inicial mundial y nueva medición — 18-11-2026
 
 La captura `audit-current-20261118/all_day.geojson` procede del feed recibido
@@ -52,7 +125,7 @@ sanos, 237 eventos live en la ventana móvil, última consulta USGS con 58,9 s
 de antigüedad, cero errores y lag 0. `complete_24h=false`; evaluación final
 pendiente tras 24 horas reales.
 
-### Cobertura de rúbrica comprobada
+### Cobertura de rúbrica anterior, antes de las capturas actuales
 
 El enunciado tiene cinco criterios sin ponderación adicional. Como auditoría
 de evidencias, **4 de 5 criterios están plenamente comprobados (80 %)**;

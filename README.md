@@ -8,6 +8,49 @@ consumidor Python y API FastAPI. El panel Angular se ejecuta aparte. Consulta
 [mediciones y costes](docs/ANALISIS-COMPLEJIDAD-COSTES.md) y
 [aceptación](docs/ACEPTACION.md).
 
+## Incremento de profundidad y panel azul noche (18-11-2026)
+
+Los filtros `min_depth_km` y `max_depth_km` son opcionales e inclusivos, en
+kilómetros; admiten valores negativos. Sin rango, las profundidades nulas
+siguen en el conjunto; con cualquier límite no coinciden. Un valor no finito
+o un mínimo mayor que el máximo devuelve HTTP 400. Mapa, tabla, estadísticas
+y comparación histórica 2025 comparten ambos límites en live y replay. La
+vista aplicada muestra el rango exacto. Para contrastar API y PostgreSQL sin
+escribir en la base:
+
+```powershell
+python tools/audit_depth.py --start 2026-11-17T12:22:05Z --end 2026-11-18T12:22:05Z --output evidence/002-ingesta-usgs-persistencia/audit-depth-20261118.json
+python tools/run_checks.py
+```
+
+El panel usa fondo `#0B1220`, superficies `#121F32`, texto `#EAF2F8`,
+turquesa `#39C4BF` y coral `#FF7A59`. El polígono del país seleccionado se
+resalta sobre Natural Earth; si el país no tiene eventos, se encuadra su
+polígono y se muestran cero resultados. «Sin país asignado» no crea un
+polígono. La sección de trazabilidad separa consulta USGS, primer evento live
+por ID, última persistencia, revisiones guardadas y cuarentena real. El número
+de duplicados descartados y el lag Kafka figuran como «no medido» porque esta
+API no tiene contadores persistentes fiables para ellos.
+
+La prueba visual reproducible usa Chrome headless instalado en el equipo y
+`playwright-core` de `frontend/package-lock.json`. Compilar Angular y ejecutar
+desde `frontend/`:
+
+```powershell
+npm ci
+npm run build
+node tests/visual-check.mjs --test-outage
+```
+
+El comando sirve el build local en `127.0.0.1:4200`, consulta la API local,
+captura escritorio y móvil, comprueba recuentos y desbordamiento en 375, 768 y
+1440 px y detiene/reinicia **solo la API** para observar el estado de fallo y
+recuperación. Termina el servidor local al salir; los cinco servicios quedan
+sanos. Las capturas y su manifiesto (filtro, ventana UTC, recuento y fecha) se
+guardan en `evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/`.
+Las conclusiones y límites de esas capturas constan en
+`docs/ANALISIS-CALIDAD.md`.
+
 ## Revisión de la rama 002 y prueba de 24 horas
 
 El sobre Kafka live y replay utiliza `event_id` como clave. Live conserva el
@@ -29,44 +72,45 @@ breve con límite de tiempo:
 python tools/monitor_24h.py --once --output evidence/002-ingesta-usgs-persistencia/monitor-smoke.jsonl
 ```
 
-La medición definitiva **ya está en marcha**. Para iniciar otra en el futuro,
-usar otro nombre de salida y no ejecutar una segunda instancia simultánea:
+La medición de 24 horas **está detenida**. No iniciar otra hasta la aprobación
+de David. Tras esa aprobación, usar otro nombre de salida y no ejecutar una
+segunda instancia simultánea:
 
 ```powershell
-$probe = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('tools/monitor_24h.py','--duration-hours','24','--interval-seconds','300','--output','evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput 'evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.stdout.log' -RedirectStandardError 'evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.stderr.log'
-$probe.Id | Set-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.pid
+$probe = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('tools/monitor_24h.py','--duration-hours','24','--interval-seconds','300','--output','evidence/002-ingesta-usgs-persistencia/monitor-aprobado.jsonl') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput 'evidence/002-ingesta-usgs-persistencia/monitor-aprobado.stdout.log' -RedirectStandardError 'evidence/002-ingesta-usgs-persistencia/monitor-aprobado.stderr.log'
+$probe.Id | Set-Content evidence/002-ingesta-usgs-persistencia/monitor-aprobado.pid
 ```
 
-Cada línea de `evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl`
+Cada línea del JSONL del monitor
 contiene fecha UTC, salud de los cinco servicios, última consulta USGS
 correcta, recuentos live/histórico/replay/cuarentena, errores de descarga y
 retraso del grupo consumidor Kafka cuando se puede leer. Consultar la última
 muestra con:
 
 ```powershell
-Get-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl | Select-Object -Last 1
+Get-Content evidence/002-ingesta-usgs-persistencia/monitor-aprobado.jsonl | Select-Object -Last 1
 ```
 
 Para detenerla antes de completar las 24 horas:
 
 ```powershell
-Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.pid))
+Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-aprobado.pid))
 ```
 
 La medición previa empezó el 18-11 a las 00:13:39 UTC y se detuvo tras seis
 muestras en 25 minutos para separar el rediseño y el reinicio de pruebas.
-La nueva comenzó el **18-11-2026 a las 00:50:16 UTC** (01:50:16 en Madrid),
-PID 15204. La primera muestra registró cinco servicios sanos, cero errores,
-consulta USGS de 58,9 segundos de antigüedad y lag Kafka 0. Evaluar mañana
-la cadencia, huecos mayores de 450 segundos, servicios no sanos, antigüedad
-de la consulta USGS mayor de diez minutos, errores y lag con:
+La segunda ejecución exploratoria comenzó el **18-11-2026 a las 00:50:16 UTC**
+(01:50:16 en Madrid), PID 15204, y se detuvo a la 01:15:16 UTC antes de
+cambiar la versión. Tuvo seis muestras en 25 minutos, sin huecos, servicios no
+sanos, errores ni lag observado. Se conserva su JSONL original. Evaluar la
+cadencia, huecos mayores de 450 segundos, salud, frescura, errores y lag con:
 
 ```powershell
 python tools/evaluate_monitor.py evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl
 ```
 
-`complete_24h` solo pasa a `true` cuando las muestras abarcan al menos 24
-horas. La auditoría reproducible por país usa la instantánea conservada en
+`complete_24h` es `false` para esa ejecución exploratoria; no se presenta como
+prueba definitiva. La auditoría reproducible por país usa la instantánea conservada en
 `evidence/002-ingesta-usgs-persistencia/audit-current-20261118/all_day.geojson`
 y la ventana UTC de 24 horas que termina el `2026-11-18T00:43:00.577413Z`:
 
@@ -76,9 +120,8 @@ python tools/audit_countries.py --audit-dir evidence/002-ingesta-usgs-persistenc
 python tools/run_checks.py --skip-kafka
 ```
 
-La opción `--skip-kafka` deja al consumidor en marcha durante la medición de
-24 horas; la prueba Kafka con reinicio ya se ejecutó antes de iniciar el
-monitor. El panel publicado en
+La opción `--skip-kafka` deja al consumidor en marcha durante una futura
+medición. El panel publicado en
 `https://stellar-basbousa-cee41b.netlify.app/` corresponde al despliegue
 Netlify `6afcf624552b6cba53bcfec2` de esta revisión. **Un build local
 posterior no actualiza automáticamente esa web:** requiere otro despliegue.
@@ -91,14 +134,12 @@ país, fechas UTC, magnitud y replay. El periodo exacto aplicado aparece arriba
 y «Restablecer filtros» vuelve a la vista rápida elegida. Los recuentos por
 país no representan riesgo sísmico ni cobertura mundial uniforme.
 
-Comprobación visual pendiente en navegador: abrir la [web publicada](https://stellar-basbousa-cee41b.netlify.app/)
-en escritorio y móvil; confirmar que inicia en comparación ≥4; cambiar a
-«Todos»; aplicar USA y después magnitud ≥4; volver a Todos; comprobar en cada
-paso que periodo y filtros visibles, indicadores, mapa, distribución y tabla
-coinciden con `/api/eventos` y `/api/estadisticas`; abrir detalles del mapa y
-verificar fechas/profundidad; comprobar replay y estado de error de API. El
-navegador integrado no tuvo sesiones disponibles para realizar esta revisión
-ni obtener capturas en esta ejecución.
+Chrome headless comprobó el **build local** en escritorio y móvil, incluidos
+mapa, distribuciones, tabla, replay, filtro por profundidad y caída/recuperación
+real de la API. El navegador integrado no ofreció sesión (`[]`), por lo que la
+prueba usó el Chrome instalado. El build local y la publicación Netlify son
+pasos distintos; la URL pública debe volver a desplegarse y verificarse tras
+cualquier cambio de Angular.
 
 ## Instalación en Windows
 

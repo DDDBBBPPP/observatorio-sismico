@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from bisect import bisect_right
 from datetime import datetime, timedelta, timezone
@@ -54,6 +55,8 @@ def filters(
     end_ms: int,
     min_mag: float | None,
     country_id: str | None,
+    min_depth_km: float | None = None,
+    max_depth_km: float | None = None,
     alias: str = "c",
     real_only: bool = True,
 ) -> tuple[str, list[Any]]:
@@ -64,12 +67,37 @@ def filters(
     if min_mag is not None:
         clauses.append(f"{alias}.mag IS NOT NULL AND {alias}.mag >= %s")
         params.append(min_mag)
+    if min_depth_km is not None:
+        clauses.append(f"{alias}.depth_km IS NOT NULL AND {alias}.depth_km >= %s")
+        params.append(min_depth_km)
+    if max_depth_km is not None:
+        clauses.append(f"{alias}.depth_km IS NOT NULL AND {alias}.depth_km <= %s")
+        params.append(max_depth_km)
     if country_id == "UNASSIGNED":
         clauses.append(f"{alias}.country_id IS NULL")
     elif country_id:
         clauses.append(f"{alias}.country_id = %s")
         params.append(country_id)
     return " AND ".join(clauses), params
+
+
+def parse_depth_range(minimum: str | None, maximum: str | None) -> tuple[float | None, float | None]:
+    def number(raw: str | None, label: str) -> float | None:
+        if raw is None:
+            return None
+        try:
+            value = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=f"{label} debe ser un número finito en km") from exc
+        if not math.isfinite(value):
+            raise HTTPException(status_code=400, detail=f"{label} debe ser un número finito en km")
+        return value
+
+    lower = number(minimum, "min_depth_km")
+    upper = number(maximum, "max_depth_km")
+    if lower is not None and upper is not None and lower > upper:
+        raise HTTPException(status_code=400, detail="min_depth_km no puede superar max_depth_km")
+    return lower, upper
 
 
 def last_ingestion(cursor) -> dict[str, Any] | None:
@@ -92,6 +120,41 @@ def last_ingestion(cursor) -> dict[str, Any] | None:
         "records_accepted": row[2],
         "records_rejected": row[3],
         "mode": row[4],
+    }
+
+
+def live_trace(cursor) -> dict[str, Any]:
+    """Read-only, database-backed live provenance; duplicates have no durable counter."""
+    cursor.execute("""
+        SELECT MAX(first_seen) FROM (
+            SELECT MIN(ingested_at) AS first_seen
+            FROM event_version
+            WHERE mode = 'live' AND load_type = 'live_feed' AND is_synthetic = FALSE
+            GROUP BY event_id
+        ) first_versions
+    """)
+    newest = cursor.fetchone()[0]
+    cursor.execute("""
+        SELECT MAX(ingested_at), COUNT(*) - COUNT(DISTINCT event_id)
+        FROM event_version
+        WHERE mode = 'live' AND load_type = 'live_feed' AND is_synthetic = FALSE
+    """)
+    persisted, revisions = cursor.fetchone()
+    cursor.execute("""
+        SELECT COUNT(*) FROM quarantine_record q
+        JOIN ingestion_run r ON r.run_id = q.run_id
+        WHERE r.load_type = 'live_feed' AND r.run_id NOT LIKE 'controlled-%'
+          AND (q.event_id IS NULL OR q.event_id NOT LIKE 'controlled-%')
+    """)
+    quarantined = cursor.fetchone()[0]
+    return {
+        "scope": "live_feed acumulado, excluye pruebas controlled-*",
+        "last_new_event_persisted_at": newest.isoformat() if newest else None,
+        "last_persisted_at": persisted.isoformat() if persisted else None,
+        "revisions_stored": revisions,
+        "duplicates_discarded": None,
+        "quarantined": quarantined,
+        "consumer_lag_messages": None,
     }
 
 
@@ -136,12 +199,14 @@ def health() -> dict[str, Any]:
         with connection() as conn:
             with conn.cursor() as cursor:
                 ingestion = last_ingestion(cursor)
+                trace = live_trace(cursor)
         return {
             "service": "api",
             "state": "ready",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "ingestion": ingestion or {"state": "not_started"},
             "source_last_fetch": last_source_fetch() or {"state": "not_started"},
+            "trace": trace,
         }
     except Exception as exc:
         raise database_error(exc) from exc
@@ -152,15 +217,18 @@ def events(
     start: datetime | None = None,
     end: datetime | None = None,
     min_mag: float | None = Query(default=None, ge=-10, le=20),
+    min_depth_km: str | None = None,
+    max_depth_km: str | None = None,
     country_id: str | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=1000, ge=1, le=5000),
     mode: str = Query(default="live", pattern="^(live|replay)$"),
 ) -> dict[str, Any]:
     start_value, end_value = parse_window(start, end)
+    depth_min, depth_max = parse_depth_range(min_depth_km, max_depth_km)
     start_ms = int(start_value.timestamp() * 1000)
     end_ms = int(end_value.timestamp() * 1000)
-    where, params = filters(start_ms, end_ms, min_mag, country_id, real_only=mode == "live")
+    where, params = filters(start_ms, end_ms, min_mag, country_id, depth_min, depth_max, real_only=mode == "live")
     table = "event_current" if mode == "live" else "replay_event_current"
     join = "JOIN event_version v ON v.event_version_id = c.event_version_id" if mode == "live" else ""
     extra = "v.mode, v.load_type, NULL::timestamptz" if mode == "live" else "'replay', 'historical_replay', c.replay_at"
@@ -227,6 +295,8 @@ def events(
                     "start": start_value.isoformat(),
                     "end": end_value.isoformat(),
                     "min_mag": min_mag,
+                    "min_depth_km": depth_min,
+                    "max_depth_km": depth_max,
                     "country_id": country_id,
                 },
             },
@@ -243,24 +313,29 @@ def statistics(
     start: datetime | None = None,
     end: datetime | None = None,
     min_mag: float | None = Query(default=None, ge=-10, le=20),
+    min_depth_km: str | None = None,
+    max_depth_km: str | None = None,
     country_id: str | None = None,
     mode: str = Query(default="live", pattern="^(live|replay)$"),
 ) -> dict[str, Any]:
     start_value, end_value = parse_window(start, end)
+    depth_min, depth_max = parse_depth_range(min_depth_km, max_depth_km)
     start_ms = int(start_value.timestamp() * 1000)
     end_ms = int(end_value.timestamp() * 1000)
-    where, params = filters(start_ms, end_ms, min_mag, country_id, real_only=mode == "live")
+    where, params = filters(start_ms, end_ms, min_mag, country_id, depth_min, depth_max, real_only=mode == "live")
     table = "event_current" if mode == "live" else "replay_event_current"
     historical_where, historical_params = filters(
         int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
         int(datetime(2026, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
         max(4.0, min_mag) if min_mag is not None else 4.0,
         country_id,
+        depth_min,
+        depth_max,
         alias="v",
     )
     comparison_mag = max(4.0, min_mag) if min_mag is not None else 4.0
     comparison_where, comparison_params = filters(
-        start_ms, end_ms, comparison_mag, country_id, real_only=mode == "live"
+        start_ms, end_ms, comparison_mag, country_id, depth_min, depth_max, real_only=mode == "live"
     )
     if mode == "live":
         comparison_where += " AND c.load_type = 'live_feed'"
@@ -330,7 +405,8 @@ def statistics(
                 "timezone": "UTC",
             },
             "mode": mode,
-            "filters": {"min_mag": min_mag, "country_id": country_id},
+            "filters": {"min_mag": min_mag, "country_id": country_id,
+                        "min_depth_km": depth_min, "max_depth_km": depth_max},
             "units": {"time": "UTC", "depth": "km", "counts": "events"},
             "count": count,
             "hourly_utc": hourly,

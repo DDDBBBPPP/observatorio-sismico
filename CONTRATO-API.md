@@ -33,7 +33,7 @@ Devuelve HTTP 200, `Content-Type: application/json` y un GeoJSON `FeatureCollect
 
 `generated`: generación de esta respuesta; no implica que la ingesta siga activa. `last_ingestion`: última consulta correcta a USGS. Fechas en milisegundos Unix UTC. Coordenadas en orden longitud, latitud, profundidad (km). Usa `null`, nunca NaN/Infinity, para magnitud, profundidad o país desconocidos. Geometría válida obligatoria en este endpoint.
 
-Filtros a implementar: `start` (ISO8601, inclusive), `end` (ISO8601, exclusive), `min_mag` y `country_id`. El mapa inicial aún no envía filtros; corresponde al alumnado añadirlos. La magnitud nula no cumple un filtro `min_mag` y debe contabilizarse por separado.
+Filtros implementados: `start` (ISO8601, inclusive), `end` (ISO8601, exclusive), `min_mag`, `country_id`, `min_depth_km` y `max_depth_km`. Los dos límites de profundidad son opcionales e inclusivos, en km; admiten números negativos. Sin rango, se conservan las profundidades nulas; con cualquier límite, no coinciden. Valores no numéricos/no finitos o mínimo mayor que máximo devuelven HTTP 400 con motivo. El mismo rango se aplica a `/api/eventos`, `/api/estadisticas` y a la comparación histórica 2025. La magnitud nula no cumple `min_mag` y se contabiliza por separado.
 
 Para limitar el tamaño, la API puede aplicar un máximo documentado de puntos. Si trunca, debe indicar `truncated: true`, el total completo y un mecanismo de paginación. El panel final deberá mostrarlo y no calcular estadísticas globales sobre una muestra truncada. El componente inicial espera una colección pequeña y completa.
 
@@ -49,6 +49,14 @@ correcta, incluso sin eventos nuevos) de `ingestion.finished_at` (último run
 procesado por el consumidor). `metadata.last_ingestion` en `/api/eventos`
 refleja la primera fecha, en milisegundos Unix UTC; si aún no existe la marca
 del productor, usa el último run procesado disponible.
+
+`/api/salud.trace` es lectura de PostgreSQL para la ingesta live acumulada:
+`last_new_event_persisted_at` usa la primera versión live por ID;
+`last_persisted_at` es el máximo `ingested_at` live; `revisions_stored` cuenta
+versiones live adicionales por ID y `quarantined` excluye eventos de prueba
+`controlled-*`. Los descartes duplicados y el lag del consumidor no tienen
+contador persistente fiable en esta API: se devuelven como `null` y el panel
+presenta «no medido». No se invoca Docker ni se publican rutas administrativas.
 
 Los filtros de estadísticas deben equivaler a los del mapa. Cada resultado debe indicar periodo, filtros, unidad y registros sin valor. Si la base falla, devuelve un error explícito; no cero eventos como si fuera un resultado válido.
 

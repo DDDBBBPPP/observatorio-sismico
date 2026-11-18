@@ -1,0 +1,89 @@
+{
+  "captured_at_utc": "2026-11-18T12:31:49.087187+00:00",
+  "window_utc": {
+    "start": "2026-11-17T12:22:05+00:00",
+    "end": "2026-11-18T12:22:05+00:00"
+  },
+  "cases": [
+    {
+      "mode": "live",
+      "range_km_inclusive": "all",
+      "api_events": 200,
+      "postgres_events": 200,
+      "null_depths": 0,
+      "historical_2025_comparison": 18302,
+      "current_window_mag_ge_4": 32,
+      "postgres_current_window_mag_ge_4": 32
+    },
+    {
+      "mode": "live",
+      "range_km_inclusive": "0-70",
+      "api_events": 179,
+      "postgres_events": 179,
+      "null_depths": 0,
+      "historical_2025_comparison": 13690,
+      "current_window_mag_ge_4": 23,
+      "postgres_current_window_mag_ge_4": 23
+    },
+    {
+      "mode": "live",
+      "range_km_inclusive": "70-300",
+      "api_events": 15,
+      "postgres_events": 15,
+      "null_depths": 0,
+      "historical_2025_comparison": 3511,
+      "current_window_mag_ge_4": 7,
+      "postgres_current_window_mag_ge_4": 7
+    },
+    {
+      "mode": "live",
+      "range_km_inclusive": "-20-0",
+      "api_events": 6,
+      "postgres_events": 6,
+      "null_depths": 0,
+      "historical_2025_comparison": 0,
+      "current_window_mag_ge_4": 0,
+      "postgres_current_window_mag_ge_4": 0
+    },
+    {
+      "mode": "replay",
+      "range_km_inclusive": "all",
+      "api_events": 10,
+      "postgres_events": 10,
+      "null_depths": 0,
+      "historical_2025_comparison": 18302,
+      "current_window_mag_ge_4": 10,
+      "postgres_current_window_mag_ge_4": 10
+    },
+    {
+      "mode": "replay",
+      "range_km_inclusive": "0-70",
+      "api_events": 8,
+      "postgres_events": 8,
+      "null_depths": 0,
+      "historical_2025_comparison": 13690,
+      "current_window_mag_ge_4": 8,
+      "postgres_current_window_mag_ge_4": 8
+    },
+    {
+      "mode": "replay",
+      "range_km_inclusive": "70-300",
+      "api_events": 2,
+      "postgres_events": 2,
+      "null_depths": 0,
+      "historical_2025_comparison": 3511,
+      "current_window_mag_ge_4": 2,
+      "postgres_current_window_mag_ge_4": 2
+    },
+    {
+      "mode": "replay",
+      "range_km_inclusive": "-20-0",
+      "api_events": 0,
+      "postgres_events": 0,
+      "null_depths": 0,
+      "historical_2025_comparison": 0,
+      "current_window_mag_ge_4": 0,
+      "postgres_current_window_mag_ge_4": 0
+    }
+  ]
+}

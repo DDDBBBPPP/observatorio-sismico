@@ -12,6 +12,7 @@ CHECKS = [
     ("manifest validation", [sys.executable, "tests/manifest_validation.py"], ROOT, 15),
     ("API acceptance", [sys.executable, "tests/acceptance.py"], ROOT, 45),
     ("filter contract", [sys.executable, "tests/filter_contract.py"], ROOT, 45),
+    ("depth SQL boundaries", [sys.executable, "tests/run_depth_sql_rules.py"], ROOT, 30),
     ("fixed-window country audit", [sys.executable, "tools/audit_countries.py"], ROOT, 60),
     ("monitor evaluation", [sys.executable, "tools/evaluate_monitor.py"], ROOT, 15),
     ("Angular filter query", ["node", "tests/filter-query.mjs"], ROOT / "frontend", 20),

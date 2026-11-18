@@ -311,6 +311,24 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [ ] T075 Completar 24 horas reales desde la nueva medición y revisar huecos,
   salud, frescura, errores, recuentos y lag.
 
+### Profundidad, trazabilidad y revisión visual (18-11-2026)
+
+- [x] T076 Añadir límites de profundidad inclusivos, negativos y errores claros
+  a ambos endpoints, panel y comparación histórica; contrastar live/replay
+  con PostgreSQL y nulos mediante tabla temporal.
+- [x] T077 Resaltar el polígono Natural Earth del país seleccionado, encuadrar
+  su territorio cuando no hay eventos y no dibujar polígono para UNASSIGNED.
+- [x] T078 Mostrar trazabilidad live verificable: consulta USGS, ID nuevo,
+  persistencia, revisiones y cuarentena; duplicados/lag sin contador fiable
+  como «no medido».
+- [x] T079 Aplicar tema azul noche y verificar Chrome headless en 375, 768 y
+  1440 px, filtros, mapa, gráficos, tabla, replay y caída/recuperación API;
+  conservar 16 capturas locales y manifiesto UTC.
+- [ ] T080 Verificar el nuevo build publicado en Netlify y su API/CORS en
+  navegador y por HTTP; pendiente hasta completar el despliegue actual.
+- [ ] T081 Completar prueba definitiva de 24 horas solo tras aprobación de
+  David. El monitor anterior se detuvo tras seis muestras exploratorias.
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

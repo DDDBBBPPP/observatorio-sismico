@@ -5,17 +5,14 @@
 - [x] T002 Aplicar migración de procedencia y excluir sintéticos en consultas.
 - [x] T003 Verificar los tres endpoints de la API con PostgreSQL real.
 - [x] T004 Implementar y comprobar la ingesta periódica y el topic replay.
-- [ ] T005 Compilar y comprobar el panel Angular conectado a la API. Build
-  y prueba de estado del componente superados el 16-11-2026. David confirmó
-  visualmente la versión nueva, los controles, replay USA=0/global=10 y,
-  en incógnito sobre Netlify, mapa con círculos, indicador de 192 eventos,
-  gráficos por país/hora y tabla con filas. Quedan por observar visualmente
-  las distribuciones completas y el aviso durante caída/recuperación.
-- [ ] T006 Ejecutar aceptación integrada y actualizar evidencias. API y cinco
-  servicios superados; caída/recuperación HTTP y estado del componente probados.
-  Sitio público HTTP 200, config publicado, CORS y capturas de David comprobados.
-  Pendientes la prueba desde otro dispositivo y el aviso visual de caída y
-  recuperación del túnel.
+- [x] T005 Compilar y comprobar el panel Angular conectado a la API. Chrome
+  headless sobre el build local capturó 16 vistas el 18-11-2026 con filtros,
+  periodo UTC y recuentos API; comprobó mapa, distribuciones completas, tabla,
+  replay, 375/768/1440 px y aviso de caída/recuperación real de la API.
+- [ ] T006 Ejecutar aceptación integrada y actualizar evidencias. API, cinco
+  servicios, caída/recuperación visual local, build y capturas propias pasan.
+  Pendiente comprobar desde otro dispositivo el túnel y su caída/recuperación;
+  la publicación del build actual se registrará por separado.
 - [x] T007 Completar documentación de diccionario, modelo, calidad,
   conclusiones, complejidad, costes y despliegue.
 - [x] T008 Verificar filtros `USA`, `ESP`, magnitud ≥4 y «Sin país asignado» en

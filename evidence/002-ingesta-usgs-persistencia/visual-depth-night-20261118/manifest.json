@@ -1,0 +1,536 @@
+{
+  "generated_at_utc": "2026-11-18T12:34:34.155Z",
+  "browser": "Chrome 157.0.8103.79",
+  "site": "http://127.0.0.1:4200",
+  "api": "http://127.0.0.1:8000",
+  "captures": [
+    {
+      "file": "inicio-mag4-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:17.531Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T12:34:16.592Z",
+        "end": "2026-11-18T12:34:16.592Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T12:34:16.592000+00:00",
+        "end": "2026-11-18T12:34:16.592000+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 31,
+      "api_count": 31,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 31,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 50.14246575342465
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "inicio-mag4-768.png",
+      "captured_at_utc": "2026-11-18T12:34:18.091Z",
+      "viewport": {
+        "width": 768,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T12:34:16.592Z",
+        "end": "2026-11-18T12:34:16.592Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T12:34:16.592000+00:00",
+        "end": "2026-11-18T12:34:16.592000+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 31,
+      "api_count": 31,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 31,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 50.14246575342465
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "inicio-mag4-375.png",
+      "captured_at_utc": "2026-11-18T12:34:18.645Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T12:34:16.592Z",
+        "end": "2026-11-18T12:34:16.592Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T12:34:16.592000+00:00",
+        "end": "2026-11-18T12:34:16.592000+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 31,
+      "api_count": 31,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 31,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 50.14246575342465
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-1-historico-paises-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:20.866Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2026-01-01T00:00:00.000Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2026-01-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 18302,
+      "api_count": 18302,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 365,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 18302
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-1-historico-paises-375.png",
+      "captured_at_utc": "2026-11-18T12:34:21.567Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2026-01-01T00:00:00.000Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2026-01-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 18302,
+      "api_count": 18302,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 365,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 18302
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-2-historico-profundidad-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:23.109Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2026-01-01T00:00:00.000Z",
+        "min_mag": "4",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2026-01-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 13690,
+      "api_count": 13690,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 13690,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 365,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 37.50684931506849,
+        "average_for_window": 13690
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-2-historico-profundidad-375.png",
+      "captured_at_utc": "2026-11-18T12:34:23.766Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2026-01-01T00:00:00.000Z",
+        "min_mag": "4",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2026-01-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 13690,
+      "api_count": 13690,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 13690,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 365,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 37.50684931506849,
+        "average_for_window": 13690
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-3-reciente-mag4-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:24.764Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T00:43:00.000Z",
+        "end": "2026-11-18T00:43:00.000Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T00:43:00+00:00",
+        "end": "2026-11-18T00:43:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 24,
+      "api_count": 24,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 24,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 50.14246575342465
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "conclusion-3-reciente-mag4-375.png",
+      "captured_at_utc": "2026-11-18T12:34:25.301Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T00:43:00.000Z",
+        "end": "2026-11-18T00:43:00.000Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T00:43:00+00:00",
+        "end": "2026-11-18T00:43:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 24,
+      "api_count": 24,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 18302,
+        "current_window_events": 24,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 50.14246575342466,
+        "average_for_window": 50.14246575342465
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "usa-con-eventos-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:26.404Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T00:43:00.000Z",
+        "end": "2026-11-18T00:43:00.000Z",
+        "country_id": "USA"
+      },
+      "period_utc": {
+        "start": "2026-11-17T00:43:00+00:00",
+        "end": "2026-11-18T00:43:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 191,
+      "api_count": 191,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 71,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 0.19452054794520549,
+        "average_for_window": 0.19452054794520546
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "can-sin-eventos-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:27.659Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T00:43:00.000Z",
+        "end": "2026-11-18T00:43:00.000Z",
+        "min_mag": "4",
+        "country_id": "CAN"
+      },
+      "period_utc": {
+        "start": "2026-11-17T00:43:00+00:00",
+        "end": "2026-11-18T00:43:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 0,
+      "api_count": 0,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 73,
+        "current_window_events": 0,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 0.2,
+        "average_for_window": 0.2
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "sin-pais-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:28.624Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T00:43:00.000Z",
+        "end": "2026-11-18T00:43:00.000Z",
+        "min_mag": "4",
+        "country_id": "UNASSIGNED"
+      },
+      "period_utc": {
+        "start": "2026-11-17T00:43:00+00:00",
+        "end": "2026-11-18T00:43:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 15,
+      "api_count": 15,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 14350,
+        "current_window_events": 15,
+        "min_mag": 4,
+        "window_days": 1,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 39.31506849315068,
+        "average_for_window": 39.31506849315068
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "replay-profundidad-1440.png",
+      "captured_at_utc": "2026-11-18T12:34:29.531Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "replay",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2025-02-01T00:00:00.000Z",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2025-02-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 8,
+      "api_count": 8,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 13690,
+        "current_window_events": 8,
+        "min_mag": 4,
+        "window_days": 31,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 37.50684931506849,
+        "average_for_window": 1162.7123287671234
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "replay-profundidad-375.png",
+      "captured_at_utc": "2026-11-18T12:34:30.067Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "replay",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2025-02-01T00:00:00.000Z",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2025-02-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 8,
+      "api_count": 8,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 13690,
+        "current_window_events": 8,
+        "min_mag": 4,
+        "window_days": 31,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 37.50684931506849,
+        "average_for_window": 1162.7123287671234
+      },
+      "page_overflow_px": 0
+    },
+    {
+      "file": "api-caida-375.png",
+      "captured_at_utc": "2026-11-18T12:34:31.390Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "state": "API container stopped; last successful replay view retained",
+      "api_query": {
+        "mode": "replay",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2025-02-01T00:00:00.000Z",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2025-02-01T00:00:00.000Z",
+        "timezone": "UTC"
+      },
+      "ui_count": 8,
+      "last_confirmed_api_count": 8,
+      "api_count_during_outage": null
+    },
+    {
+      "file": "api-recuperada-375.png",
+      "captured_at_utc": "2026-11-18T12:34:34.154Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "replay",
+        "start": "2025-01-01T00:00:00.000Z",
+        "end": "2025-02-01T00:00:00.000Z",
+        "min_depth_km": "0",
+        "max_depth_km": "70"
+      },
+      "period_utc": {
+        "start": "2025-01-01T00:00:00+00:00",
+        "end": "2025-02-01T00:00:00+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 8,
+      "api_count": 8,
+      "historical_comparison": {
+        "year": 2025,
+        "filters_equivalent": true,
+        "events": 13690,
+        "current_window_events": 8,
+        "min_mag": 4,
+        "window_days": 31,
+        "days_in_denominator": 365,
+        "average_daily_including_zero_days": 37.50684931506849,
+        "average_for_window": 1162.7123287671234
+      },
+      "page_overflow_px": 0
+    }
+  ]
+}

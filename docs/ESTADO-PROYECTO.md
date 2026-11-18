@@ -1,6 +1,31 @@
 # Estado del proyecto
 
-## Vista mundial inicial y nueva medición — 18-11-2026
+## Incremento de profundidad y tema azul noche — 18-11-2026
+
+- Rama `002-ingesta-usgs-persistencia` desde `b1613977`; diez archivos de
+  código/pruebas modificados al reanudar, sin reset ni cambio de rama.
+- Monitor PID 15204 verificado como `tools/monitor_24h.py` y detenido. JSONL
+  exploratorio intacto: seis muestras de 00:50:16 a 01:15:16 UTC (25 min), sin
+  huecos, servicios no sanos, errores ni lag observado; no es prueba de 24 h.
+- Cinco servicios Docker sanos tras reconstruir solo la API y ejecutar la
+  batería completa `tools/run_checks.py` con límites, incluida integración
+  Kafka. El contraste SQL fijo dio 200/179/15/6 eventos live para sin rango,
+  0–70, 70–300 y −20–0 km; API, estadísticas y BD coincidieron. Replay dio
+  10/8/2/0 y comparación 2025 18.302/13.690/3.511/0. Prueba SQL con tabla
+  temporal cubrió NULL y límites inclusivos sin tocar datos persistentes.
+- Chrome headless 157 capturó 16 vistas locales y manifiesto UTC a las
+  12:34 UTC: 375/768/1440 px sin desbordamiento, tres conclusiones, USA con
+  polígono, CAN con 0 eventos y polígono, «Sin país asignado» sin polígono,
+  replay y caída/recuperación real de API. El navegador integrado devolvió
+  `[]`. T005 queda comprobada; T006 aún requiere otro dispositivo/túnel.
+- Trazabilidad SQL/API comprobada: 374 revisiones live guardadas, cuarentena
+  real 0 al excluir dos casos controlados, marcas distintas de consulta USGS,
+  primer evento nuevo y última persistencia. Duplicados descartados y lag se
+  muestran «no medido». Cinco criterios literales de rúbrica cuentan con
+  evidencia; la medición de 24 h sigue pendiente. Falta commit/push y publicar
+  y verificar el **nuevo** build Netlify. No iniciar monitor sin aprobación.
+
+## Estado anterior: vista mundial inicial y monitor después detenido — 18-11-2026
 
 - Rama `002-ingesta-usgs-persistencia`, PR #1 en borrador. Se conservaron
   PostgreSQL, volúmenes y los 18.302 registros históricos; no se fusionó.

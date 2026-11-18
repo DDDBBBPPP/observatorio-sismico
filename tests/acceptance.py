@@ -15,6 +15,12 @@ def get(path):
 
 health = get("/api/salud")
 assert health["state"] == "ready"
+assert health["source_last_fetch"]["received_at"]
+trace = health["trace"]
+assert trace["last_new_event_persisted_at"] and trace["last_persisted_at"]
+assert trace["last_new_event_persisted_at"] <= trace["last_persisted_at"]
+assert trace["revisions_stored"] >= 0 and trace["quarantined"] >= 0
+assert trace["duplicates_discarded"] is None and trace["consumer_lag_messages"] is None
 period = "start=2025-01-01T00%3A00%3A00Z&end=2026-01-01T00%3A00%3A00Z&min_mag=4"
 first = get(f"/api/eventos?{period}&page_size=7&page=1")
 second = get(f"/api/eventos?{period}&page_size=7&page=2")

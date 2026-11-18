@@ -3,6 +3,8 @@ export type FilterState = {
   start: string;
   end: string;
   minMag: string;
+  minDepthKm: string;
+  maxDepthKm: string;
   country: string;
 };
 
@@ -11,6 +13,8 @@ export const emptyFilters = (viewMode: 'live' | 'replay' = 'live'): FilterState 
   start: viewMode === 'replay' ? '2025-01-01T00:00' : '',
   end: viewMode === 'replay' ? '2025-02-01T00:00' : '',
   minMag: '',
+  minDepthKm: '',
+  maxDepthKm: '',
   country: ''
 });
 
@@ -26,6 +30,19 @@ export function buildQuery(selected: FilterState, now = new Date()): string {
   params.set('start', start.toISOString());
   params.set('end', end.toISOString());
   if (selected.minMag) params.set('min_mag', selected.minMag);
+  const depth = (raw: string, label: string): number | null => {
+    if (raw.trim() === '') return null;
+    const value = Number(raw);
+    if (!Number.isFinite(value)) throw new Error(`${label} debe ser un número finito en km`);
+    return value;
+  };
+  const minDepth = depth(selected.minDepthKm, 'La profundidad mínima');
+  const maxDepth = depth(selected.maxDepthKm, 'La profundidad máxima');
+  if (minDepth !== null && maxDepth !== null && minDepth > maxDepth) {
+    throw new Error('La profundidad mínima no puede superar la máxima');
+  }
+  if (minDepth !== null) params.set('min_depth_km', String(minDepth));
+  if (maxDepth !== null) params.set('max_depth_km', String(maxDepth));
   if (selected.country) params.set('country_id', selected.country);
   return `?${params.toString()}`;
 }

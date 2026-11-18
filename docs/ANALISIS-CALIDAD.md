@@ -49,21 +49,33 @@ ni los eventos. El batch revisado calcula futuros contadores desde checkpoints.
 
 ## Tres conclusiones defendibles
 
-Captura de la ventana reciente: **2026-11-15 00:56:47 UTC**. Los recuentos live
-pueden variar al actualizarse USGS. Todas las conclusiones excluyen sintéticos
-y replay.
+Capturas reproducibles de Chrome headless: **2026-11-18 12:34 UTC**, con
+filtros, periodo, recuento y fecha por imagen en
+`evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/manifest.json`.
+Los recuentos live pueden variar al actualizarse USGS. Todas las conclusiones
+excluyen sintéticos y replay.
 
 1. En 2025 UTC, mundo, magnitud ≥4 y tipo terremoto, **14.350 de 18.302
    eventos (78,41 %)** carecen de país asignado por el catálogo Natural Earth.
    Esto justifica una categoría «Sin país asignado» en lugar de perderlos.
-2. Con los mismos periodo y filtros históricos, **13.689 de 18.302 (74,79 %)**
-   tienen profundidad menor de 70 km. El denominador incluye todos los
-   eventos porque no hubo profundidad nula en este conjunto.
-3. En las 24 horas anteriores a la captura, mundo, magnitud ≥4, terremotos
-   reales, hubo **19 eventos** frente a **18.302/365 = 50,14 por día** en 2025
-   con los mismos filtros. La diferencia es −31,14 (−62,1 %) respecto a esa
-   media histórica, cuyo denominador incluye días con cero eventos. La ventana
-   reciente puede recibir eventos tardíos y no permite predecir actividad.
+2. Con los mismos periodo y filtros históricos y profundidad **0–70 km
+   inclusiva**, **13.690 de 18.302 (74,80 %)** cumplen el rango. El
+   denominador incluye todos los eventos porque no hubo profundidad nula en
+   este conjunto. Un evento exactamente a 70 km explica la diferencia con el
+   recuento anterior de 13.689 para profundidad estrictamente menor de 70 km.
+3. En la ventana fija **2026-11-17 00:43–2026-11-18 00:43 UTC**, mundo,
+   magnitud ≥4 y terremotos reales, la API mostró **24 eventos** a las
+   12:34 UTC frente a **18.302/365 = 50,14 por día** en 2025 con los mismos
+   filtros. La diferencia es −26,14 (−52,1 %) respecto a esa media histórica,
+   cuyo denominador incluye días con cero eventos. La instantánea `all_day`
+   conservada a las 00:43 UTC contenía 22 para esa ventana; dos registros
+   adicionales aparecieron después en el estado persistido. La ventana puede
+   recibir eventos tardíos y no permite predecir actividad.
+
+Las capturas de cada conclusión están en escritorio (1440 px) y móvil (375 px):
+`conclusion-1-historico-paises-*`, `conclusion-2-historico-profundidad-*` y
+`conclusion-3-reciente-mag4-*`. El mapa de 2025 dibuja la primera página de
+1.000 puntos y avisa de ello; indicadores y porcentajes usan los 18.302.
 
 La geografía proviene de un catálogo simplificado y una coincidencia sobre
 fronteras puede ser ambigua. Las conclusiones describen solo los filtros,
