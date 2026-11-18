@@ -285,8 +285,8 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
   de mapa, gráficos y tabla al aplicar filtros.
 - [x] T066 Iniciar el monitor 24 h en segundo plano y verificar su primera
   muestra; incorporar evaluador de huecos, salud, frescura y lag.
-- [ ] T067 Revisar visualmente el despliegue en escritorio y móvil, con
-  capturas de esta versión; el navegador integrado no estuvo disponible.
+- [x] T067 Revisar visualmente el despliegue actual en escritorio y móvil con
+  Chrome headless, capturas públicas y manifiesto UTC; API y panel coincidieron.
 
 ### Vista mundial inicial y monitor definitivo (18-11-2026)
 
@@ -306,8 +306,8 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
   (`6afcf624552b6cba53bcfec2`) y comprobar assets públicos, API y CORS.
 - [x] T073 Cerrar el monitor previo de seis muestras y empezar medición nueva
   tras estabilizar/publicar; primera muestra sana a las 00:50:16 UTC.
-- [ ] T074 Verificar visualmente escritorio y móvil con navegador y capturas;
-  el navegador integrado no tuvo sesiones disponibles.
+- [x] T074 Verificar visualmente escritorio y móvil con Chrome headless local y
+  capturas; el navegador integrado no tuvo sesiones disponibles.
 - [ ] T075 Completar 24 horas reales desde la nueva medición y revisar huecos,
   salud, frescura, errores, recuentos y lag.
 
@@ -324,8 +324,9 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [x] T079 Aplicar tema azul noche y verificar Chrome headless en 375, 768 y
   1440 px, filtros, mapa, gráficos, tabla, replay y caída/recuperación API;
   conservar 16 capturas locales y manifiesto UTC.
-- [ ] T080 Verificar el nuevo build publicado en Netlify y su API/CORS en
-  navegador y por HTTP; pendiente hasta completar el despliegue actual.
+- [x] T080 Verificar el nuevo build `main-GIBIKXGC.js` publicado en Netlify
+  (`6afd9c835bbf58fb34663797`), API/CORS por HTTP y navegador público a
+  1440/375 px; guardar capturas y manifiesto UTC.
 - [ ] T081 Completar prueba definitiva de 24 horas solo tras aprobación de
   David. El monitor anterior se detuvo tras seis muestras exploratorias.
 

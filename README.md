@@ -51,6 +51,21 @@ guardan en `evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/`
 Las conclusiones y límites de esas capturas constan en
 `docs/ANALISIS-CALIDAD.md`.
 
+El **build nuevo** `main-GIBIKXGC.js` se publicó en el proyecto Netlify existente
+como despliegue `6afd9c835bbf58fb34663797`:
+`https://stellar-basbousa-cee41b.netlify.app/`. Se comprobaron los assets
+públicos, API y CORS con `python tools/verify_public.py`. Chrome headless abrió
+la URL pública en 1440 y 375 px, sin desbordamiento, y observó 31 eventos
+de magnitud ≥4 tanto en el panel como en la API en la ventana capturada. Las
+capturas públicas y su manifiesto UTC están en la misma carpeta de evidencias.
+Para repetir la comprobación pública:
+
+```powershell
+python tools/verify_public.py
+Set-Location frontend
+node tests/public-visual.mjs
+```
+
 ## Revisión de la rama 002 y prueba de 24 horas
 
 El sobre Kafka live y replay utiliza `event_id` como clave. Live conserva el
@@ -121,10 +136,10 @@ python tools/run_checks.py --skip-kafka
 ```
 
 La opción `--skip-kafka` deja al consumidor en marcha durante una futura
-medición. El panel publicado en
-`https://stellar-basbousa-cee41b.netlify.app/` corresponde al despliegue
-Netlify `6afcf624552b6cba53bcfec2` de esta revisión. **Un build local
-posterior no actualiza automáticamente esa web:** requiere otro despliegue.
+medición. El despliegue Netlify anterior fue
+`6afcf624552b6cba53bcfec2`; el build actual se publicó y verificó en el
+despliegue `6afd9c835bbf58fb34663797`. Cada cambio posterior de Angular
+requerirá otro despliegue para actualizar la web pública.
 
 El panel arranca en **«Comparación mundial · magnitud ≥4»** para reducir el
 sesgo de los terremotos pequeños. **«Todos los registros comunicados por
@@ -137,9 +152,9 @@ país no representan riesgo sísmico ni cobertura mundial uniforme.
 Chrome headless comprobó el **build local** en escritorio y móvil, incluidos
 mapa, distribuciones, tabla, replay, filtro por profundidad y caída/recuperación
 real de la API. El navegador integrado no ofreció sesión (`[]`), por lo que la
-prueba usó el Chrome instalado. El build local y la publicación Netlify son
-pasos distintos; la URL pública debe volver a desplegarse y verificarse tras
-cualquier cambio de Angular.
+prueba usó el Chrome instalado. También abrió y capturó el build **público**
+en escritorio y móvil. El build local y la publicación Netlify son pasos
+distintos.
 
 ## Instalación en Windows
 

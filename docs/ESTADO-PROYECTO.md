@@ -22,8 +22,12 @@
   real 0 al excluir dos casos controlados, marcas distintas de consulta USGS,
   primer evento nuevo y última persistencia. Duplicados descartados y lag se
   muestran «no medido». Cinco criterios literales de rúbrica cuentan con
-  evidencia; la medición de 24 h sigue pendiente. Falta commit/push y publicar
-  y verificar el **nuevo** build Netlify. No iniciar monitor sin aprobación.
+  evidencia; la medición de 24 h sigue pendiente. El incremento se subió en
+  `ca067aa` y el build `main-GIBIKXGC.js` se publicó en Netlify como
+  `6afd9c835bbf58fb34663797`. La URL pública pasó assets, API y CORS por
+  HTTP y Chrome headless a 1440/375 px: 31 eventos ≥4 coincidieron con API,
+  sin desbordamiento. Capturas públicas y manifiesto UTC conservados. No
+  iniciar monitor sin aprobación; T006 de segundo dispositivo/túnel pendiente.
 
 ## Estado anterior: vista mundial inicial y monitor después detenido — 18-11-2026
 

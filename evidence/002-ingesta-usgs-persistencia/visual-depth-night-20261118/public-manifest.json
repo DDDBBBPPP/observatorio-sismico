@@ -1,0 +1,51 @@
+{
+  "generated_at_utc": "2026-11-18T12:39:26.862Z",
+  "site": "https://stellar-basbousa-cee41b.netlify.app/",
+  "browser": "Chrome 157.0.8103.79",
+  "captures": [
+    {
+      "file": "public-inicio-1440.png",
+      "captured_at_utc": "2026-11-18T12:39:26.215Z",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T12:39:24.487Z",
+        "end": "2026-11-18T12:39:24.487Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T12:39:24.487000+00:00",
+        "end": "2026-11-18T12:39:24.487000+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 31,
+      "api_count": 31,
+      "page_overflow_px": 0
+    },
+    {
+      "file": "public-inicio-375.png",
+      "captured_at_utc": "2026-11-18T12:39:26.861Z",
+      "viewport": {
+        "width": 375,
+        "height": 812
+      },
+      "api_query": {
+        "mode": "live",
+        "start": "2026-11-17T12:39:24.487Z",
+        "end": "2026-11-18T12:39:24.487Z",
+        "min_mag": "4"
+      },
+      "period_utc": {
+        "start": "2026-11-17T12:39:24.487000+00:00",
+        "end": "2026-11-18T12:39:24.487000+00:00",
+        "timezone": "UTC"
+      },
+      "ui_count": 31,
+      "api_count": 31,
+      "page_overflow_px": 0
+    }
+  ]
+}

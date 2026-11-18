@@ -73,6 +73,20 @@ se inició ni se declara superada: el PID 15204 se verificó y se detuvo tras
 seis muestras exploratorias (00:50:16–01:15:16 UTC), sin huecos ni errores.
 Su JSONL permanece intacto.
 
+### Publicación del build actual
+
+El build Angular `main-GIBIKXGC.js` se publicó en
+`https://stellar-basbousa-cee41b.netlify.app/` con ID Netlify
+`6afd9c835bbf58fb34663797`. `python tools/verify_public.py` comprobó
+assets públicos idénticos al build local, salud/eventos/estadísticas de la API
+por ngrok y preflight CORS (HTTP 200). Chrome headless 157 abrió la **URL
+pública** a 1440 y 375 px, sin desbordamiento horizontal; la vista inicial
+mostró **31 eventos de magnitud ≥4**, igual que la API en la ventana UTC del
+manifiesto. Se conservan `public-inicio-1440.png`, `public-inicio-375.png` y
+`public-manifest.json` en la carpeta de capturas. La prueba visual de caída y
+recuperación de API se efectuó sobre el build local; T006 sigue pendiente de
+segundo dispositivo y caída/recuperación del túnel desde allí.
+
 ## Vista inicial mundial y nueva medición — 18-11-2026
 
 La captura `audit-current-20261118/all_day.geojson` procede del feed recibido

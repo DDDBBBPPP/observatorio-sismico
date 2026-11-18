@@ -11,8 +11,9 @@
   replay, 375/768/1440 px y aviso de caída/recuperación real de la API.
 - [ ] T006 Ejecutar aceptación integrada y actualizar evidencias. API, cinco
   servicios, caída/recuperación visual local, build y capturas propias pasan.
-  Pendiente comprobar desde otro dispositivo el túnel y su caída/recuperación;
-  la publicación del build actual se registrará por separado.
+  El build actual está publicado y comprobado en la URL pública, con API/CORS
+  y capturas Chrome a 1440/375 px. Pendiente comprobar desde otro dispositivo
+  el túnel y su caída/recuperación.
 - [x] T007 Completar documentación de diccionario, modelo, calidad,
   conclusiones, complejidad, costes y despliegue.
 - [x] T008 Verificar filtros `USA`, `ESP`, magnitud ≥4 y «Sin país asignado» en
