@@ -327,8 +327,9 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [x] T080 Verificar el nuevo build `main-GIBIKXGC.js` publicado en Netlify
   (`6afd9c835bbf58fb34663797`), API/CORS por HTTP y navegador público a
   1440/375 px; guardar capturas y manifiesto UTC.
-- [ ] T081 Completar prueba definitiva de 24 horas solo tras aprobación de
-  David. El monitor anterior se detuvo tras seis muestras exploratorias.
+- [ ] T081 Completar y evaluar 24 horas reales. David autorizó la nueva
+  medición, iniciada el 18-11-2026 a las 15:03:04 UTC; la primera muestra
+  fue sana. La ejecución anterior conserva seis muestras exploratorias.
 
 ## Dependencies & Execution Order
 

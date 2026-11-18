@@ -1,5 +1,33 @@
 # Estado del proyecto
 
+## Punto de reanudación: cierre documental y nueva medición — 18-11-2026
+
+- Rama `002-ingesta-usgs-persistencia`; base al empezar este cierre
+  `1b99ff3dc797a5de683e8d597b8e52083892067e`. Se sustituyó el README
+  cronológico por uno final y se añadieron `docs/GUIA-INSTALACION.md` y
+  `docs/GUIA-DEFENSA.md`. `ENUNCIADO.md`, contrato API, guía de entregables,
+  dos copias idénticas de la FAQ y validación inicial se movieron a
+  `docs/material-profesor/`; `FUENTES-Y-LICENCIAS.md` sigue en la raíz.
+- Autorizada una nueva medición de 24 h. Antes del inicio se comprobaron cinco
+  servicios `running/healthy` y ausencia de otro `tools/monitor_24h.py`.
+  Muestra breve a **2026-11-18 15:02:46.921596 UTC** sin errores, cinco
+  servicios sanos y lag Kafka 0. Ejecución en segundo plano PID **13216**,
+  comprobado como `tools/monitor_24h.py`, primera muestra
+  **2026-11-18 15:03:04.098498 UTC** en
+  `evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl`.
+  Primera muestra: cinco sanos, cero errores de muestra, consulta USGS
+  correcta a 15:02:20.877343 UTC, histórico 18.302, lag 0. El contador
+  acumulado `live_fetch_errors_total=11` incluye errores previos al inicio;
+  no implica once fallos de esta medición. **24 h aún no completadas**.
+- Para consultar: `Get-Content evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl | Select-Object -Last 1`.
+  Para evaluar después de **2026-11-19 15:03:04 UTC**:
+  `python tools/evaluate_monitor.py evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl`.
+  Verificar además PID/comando, huecos, salud, frescura, lag y errores. Esta
+  medición local no mide por sí sola disponibilidad externa de Netlify/ngrok.
+  No ejecutar pruebas que detengan API o consumidor mientras mide.
+- Pendiente antes de la entrega final: T006 desde un segundo dispositivo con
+  caída y recuperación del túnel. PR #1 debe permanecer en borrador, sin merge.
+
 ## Incremento de profundidad y tema azul noche — 18-11-2026
 
 - Rama `002-ingesta-usgs-persistencia` desde `b1613977`; diez archivos de

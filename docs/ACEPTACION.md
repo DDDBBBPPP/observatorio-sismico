@@ -58,7 +58,7 @@ actividad mundial ni riesgo a partir de porcentajes por país.
 
 ### Matriz literal de cinco criterios
 
-| Criterio de `ENUNCIADO.md` | Evidencia observada | Estado |
+| Criterio de [la rúbrica literal](material-profesor/ENUNCIADO.md) | Evidencia observada | Estado |
 | --- | --- | --- |
 | Extracción | Feed periódico, 12 respuestas históricas conservadas, catálogo, tipos/unidades y original con SHA | Comprobado |
 | Calidad | Seis dimensiones y acciones, antes/después, cuarentena, prueba SQL de nulos y rangos | Comprobado |
@@ -68,10 +68,13 @@ actividad mundial ni riesgo a partir de porcentajes por país.
 
 **5/5 criterios con evidencia (100 % de cobertura de criterios, no nota).**
 Permanece pendiente T006 de aceptación externa: comprobar desde un segundo
-dispositivo el túnel y su caída/recuperación visual. La prueba de 24 horas no
-se inició ni se declara superada: el PID 15204 se verificó y se detuvo tras
-seis muestras exploratorias (00:50:16–01:15:16 UTC), sin huecos ni errores.
-Su JSONL permanece intacto.
+dispositivo el túnel y su caída/recuperación visual. La ejecución anterior,
+PID 15204, se detuvo tras seis muestras exploratorias (00:50:16–01:15:16 UTC),
+sin huecos ni errores; su JSONL permanece intacto. Una **nueva** medición
+autorizada comenzó el 18-11 a las **15:03:04 UTC** en
+`monitor-entrega-20261118.jsonl`; su primera muestra fue sana. No han
+transcurrido 24 horas ni se declara superada. El estado actual y el comando
+de evaluación están en [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md).
 
 ### Publicación del build actual
 
