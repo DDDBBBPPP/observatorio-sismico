@@ -288,6 +288,29 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [ ] T067 Revisar visualmente el despliegue en escritorio y móvil, con
   capturas de esta versión; el navegador integrado no estuvo disponible.
 
+### Vista mundial inicial y monitor definitivo (18-11-2026)
+
+- [x] T068 Congelar una nueva instantánea `all_day.geojson` con hash y ventana
+  UTC móvil de 24 h; contrastar IDs `earthquake`, API, estadísticas, PostgreSQL
+  y suma completa por países en todos los registros y magnitud ≥4.
+- [x] T069 Explicar el 189/236 USA observado y 0/22 con magnitud ≥4, el ID
+  persistido de una captura anterior, la cobertura desigual de redes y el
+  significado de «Sin país asignado» con evidencia reproducible.
+- [x] T070 Reducir cabecera y menú; mostrar arriba periodo UTC, última consulta
+  USGS y métricas; iniciar en «Comparación mundial · magnitud ≥4» y ofrecer
+  «Todos los registros comunicados por USGS» como vista rápida.
+- [x] T071 Probar cambio entre vistas, USA, Todos, umbral ≥4, mapa, gráficos,
+  tabla, replay y error con pruebas del componente; formatear fechas y
+  profundidades sin residuos de coma flotante.
+- [x] T072 Construir Angular, publicar el build en Netlify existente
+  (`6afcf624552b6cba53bcfec2`) y comprobar assets públicos, API y CORS.
+- [x] T073 Cerrar el monitor previo de seis muestras y empezar medición nueva
+  tras estabilizar/publicar; primera muestra sana a las 00:50:16 UTC.
+- [ ] T074 Verificar visualmente escritorio y móvil con navegador y capturas;
+  el navegador integrado no tuvo sesiones disponibles.
+- [ ] T075 Completar 24 horas reales desde la nueva medición y revisar huecos,
+  salud, frescura, errores, recuentos y lag.
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

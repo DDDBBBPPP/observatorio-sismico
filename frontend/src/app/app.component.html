@@ -1,28 +1,32 @@
 <a class="skip-link" href="#explorar">Saltar a los filtros</a>
 <main>
   <header class="masthead">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>OBSERVATORIO SÍSMICO <small>USGS · NATURAL EARTH</small></span></div>
-    <div class="hero-copy"><p class="eyebrow">EXPLORADOR DE TERREMOTOS</p><h1>La actividad sísmica,<br><em>en contexto.</em></h1>
-    <p>Consulta eventos reales, examina el mapa y compáralos con el histórico de 2025. Las horas se muestran en UTC.</p></div>
-    <nav class="page-nav" aria-label="Secciones"><a href="#explorar">Filtros</a><a href="#mapa">Mapa</a><a href="#indicadores">Indicadores</a><a href="#eventos">Eventos</a></nav>
+    <div class="masthead-row"><div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>OBSERVATORIO SÍSMICO <small>USGS · NATURAL EARTH</small></span></div>
+      <nav class="page-nav" aria-label="Secciones"><a href="#explorar">Filtros</a><a href="#mapa">Mapa</a><a href="#eventos">Tabla</a></nav></div>
+    <div class="hero-copy"><h1>Terremotos registrados por USGS</h1><p>Explora datos observados, su ubicación y una comparación histórica. Los recuentos dependen de la cobertura de las redes.</p></div>
   </header>
 
   <section class="status-panel" [class.status-error]="hasError()" aria-live="polite">
-    <div class="status-main">
-      <div><span class="live-dot" aria-hidden="true"></span><strong>{{ mode() }}</strong><p [attr.role]="hasError() ? 'alert' : null">{{ status() }}</p></div>
+    <div class="overview-head">
+      <div><span class="section-kicker">PERIODO APLICADO · UTC</span><strong>{{ appliedPeriod() }}</strong><p>{{ appliedLabel() }}</p></div>
+      @if (applied().viewMode === 'live') { <div class="fetch-stamp"><span>Última consulta USGS correcta</span><strong>{{ lastIngestion() }}</strong></div> }
+      @else { <div class="fetch-stamp"><span>Modo de datos</span><strong>Replay histórico · no es actividad reciente</strong></div> }
+    </div>
+    <div class="quick-views" role="group" aria-label="Vistas rápidas de datos reales">
+      <button type="button" [class.selected]="activeQuickView() === 'comparison'" [attr.aria-pressed]="activeQuickView() === 'comparison'" (click)="selectQuickView('comparison')" [disabled]="loading()"><strong>Comparación mundial · magnitud ≥4</strong><span>Vista inicial, más comparable entre regiones</span></button>
+      <button type="button" [class.selected]="activeQuickView() === 'all'" [attr.aria-pressed]="activeQuickView() === 'all'" (click)="selectQuickView('all')" [disabled]="loading()"><strong>Todos los registros comunicados por USGS</strong><span>Incluye terremotos pequeños; cobertura desigual</span></button>
+    </div>
+    @if (stats(); as summary) { <div class="overview-metrics"><div><span>Terremotos del filtro</span><strong>{{ summary.count }}</strong></div><div><span>Países con eventos</span><strong>{{ assignedCountryCount(summary.countries) }}</strong></div><div><span>Sin país asignado</span><strong>{{ unassignedCount(summary.countries) }}</strong></div><div><span>Terremoto más reciente</span><strong class="metric-date">{{ latestEvent() }}</strong></div></div> }
+    <div class="status-main"><p><span class="live-dot" aria-hidden="true"></span><strong>{{ mode() }}</strong> · <span [attr.role]="hasError() ? 'alert' : null">{{ status() }}</span></p>
       @if (loading()) { <span class="loading" role="status">Actualizando…</span> }
       @if (hasError() && !loading()) { <button type="button" class="secondary retry" (click)="retry()">Reintentar consulta</button> }
     </div>
-    <p class="muted">{{ countriesStatus() }} · {{ count() }} puntos dibujados · {{ omitted() }} omitidos por coordenadas inválidas</p>
-    <dl class="freshness"><div><dt>Última consulta del panel</dt><dd>{{ lastRead() }}</dd></div><div><dt>Respuesta generada</dt><dd>{{ generated() }}</dd></div>
-      @if (applied().viewMode === 'live') { <div><dt>Última consulta USGS correcta</dt><dd>{{ lastIngestion() }}</dd></div><div><dt>Terremoto más reciente del filtro</dt><dd>{{ latestEvent() }}</dd></div> }
-      @else { <div><dt>Terremoto más reciente del replay</dt><dd>{{ latestEvent() }}</dd></div> }
-    </dl>
+    <details class="timing-details"><summary>Detalles de actualización</summary><p>Consulta del panel: {{ lastRead() }} · Respuesta generada: {{ generated() }} · {{ countriesStatus() }} · {{ omitted() }} puntos omitidos por coordenadas inválidas.</p></details>
     @if (apiStale()) { <p class="notice">{{ apiStale() }}</p> }
   </section>
 
   <section id="explorar" class="filter-panel" aria-label="Filtros de consulta">
-    <div class="section-heading"><div><span class="section-kicker">01 / CONSULTA</span><h2>Explora los datos</h2></div><p>Elige un periodo y aplica los filtros para actualizar mapa, indicadores y tabla.</p></div>
+    <div class="section-heading"><div><span class="section-kicker">FILTROS AVANZADOS</span><h2>Ajusta la consulta</h2></div><p>País, periodo y magnitud se aplican juntos al mapa, gráficos y tabla.</p></div>
     <div class="filter-grid">
       <label>Vista
         <select [value]="viewMode()" (change)="setViewMode($event)">
@@ -42,11 +46,11 @@
       </label>
       <div class="filter-actions">
         <button type="button" (click)="applyFilters()" [disabled]="loading()">Aplicar filtros</button>
-        <button type="button" class="secondary" (click)="clearFilters()" [disabled]="loading()">Limpiar filtros</button>
+        <button type="button" class="secondary" (click)="clearFilters()" [disabled]="loading()">Restablecer filtros</button>
       </div>
     </div>
     <div class="applied" aria-live="polite"><span class="applied-kicker">VISTA APLICADA</span><strong>{{ appliedLabel() }}</strong><span>Periodo exacto: {{ appliedPeriod() }}</span></div>
-    <div class="context-note"><p><strong>Sin país asignado</strong> conserva puntos marítimos o fuera de los polígonos: no significa dato inválido.</p><p><strong>Magnitudes pequeñas:</strong> la cobertura de redes sísmicas varía por región. Compara con magnitud ≥4 antes de interpretar el reparto por país.</p></div>
+    <div class="context-note"><p><strong>Sin país asignado</strong> incluye el mar y puntos fuera de los polígonos: no significa dato inválido.</p><p><strong>Cobertura desigual:</strong> los recuentos por país reflejan qué registran y comunican las redes, sobre todo para magnitudes pequeñas. No indican riesgo sísmico.</p></div>
     @if (pending() && !loading()) { <p class="pending">Hay cambios sin aplicar; el mapa, gráficos y tabla siguen mostrando los filtros aplicados.</p> }
     @if (truncated()) { <p class="notice">El mapa muestra la primera página; los indicadores usan todos los registros filtrados.</p> }
   </section>
@@ -99,10 +103,10 @@
     <div class="section-heading"><div><span class="section-kicker">04 / DETALLE</span><h2>Eventos</h2></div><p>Primeros {{ tableEvents().length }} registros de la página, por fecha de ocurrencia. Máximo 100 filas visibles.</p></div>
     <p class="mobile-table-hint">En pantallas pequeñas, desliza la tabla horizontalmente para ver todas las columnas.</p>
     <div class="table-scroll"><table [attr.aria-busy]="loading()">
-      <thead><tr><th scope="col">Fecha original UTC</th><th scope="col">Magnitud</th><th scope="col">Profundidad (km)</th><th scope="col">Lugar</th><th scope="col">País</th>@if (applied().viewMode === 'replay') { <th scope="col">Reproducido UTC</th> }<th scope="col">ID</th></tr></thead>
+      <thead><tr><th scope="col">Fecha original</th><th scope="col">Magnitud</th><th scope="col">Profundidad (km)</th><th scope="col">Lugar</th><th scope="col">País</th>@if (applied().viewMode === 'replay') { <th scope="col">Reproducido</th> }<th scope="col">ID</th></tr></thead>
       <tbody>
         @for (feature of tableEvents(); track feature.id) {
-          <tr><td>{{ date(feature.properties.time) }}</td><td class="numeric">{{ feature.properties.mag ?? 'ND' }}</td><td class="numeric">{{ depth(feature) }}</td><td>{{ feature.properties.place ?? 'Sin descripción' }}</td><td>{{ countryDisplay(feature.properties.country_id, feature.properties.country_name) }}</td>@if (applied().viewMode === 'replay') { <td>{{ replayDate(feature.properties.replay_at) }}</td> }<td class="event-id">{{ feature.id }}</td></tr>
+          <tr><td>{{ date(feature.properties.time) }}</td><td class="numeric">{{ formatMagnitude(feature.properties.mag) }}</td><td class="numeric">{{ depth(feature) }}</td><td>{{ feature.properties.place ?? 'Sin descripción' }}</td><td>{{ countryDisplay(feature.properties.country_id, feature.properties.country_name) }}</td>@if (applied().viewMode === 'replay') { <td>{{ replayDate(feature.properties.replay_at) }}</td> }<td class="event-id">{{ feature.id }}</td></tr>
         } @empty { <tr><td [attr.colspan]="applied().viewMode === 'replay' ? 7 : 6">No hay eventos para los filtros aplicados.</td></tr> }
       </tbody>
     </table></div>

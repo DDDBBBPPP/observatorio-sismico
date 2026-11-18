@@ -1,0 +1,239 @@
+{
+  "source": {
+    "run_id": "run-8276ca0991704d378c8e16468c06b0f8",
+    "received_at": "2026-11-18T00:43:00.577413+00:00",
+    "metadata": {
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+      "requested_at": "2026-11-18T00:43:00.455511+00:00",
+      "received_at": "2026-11-18T00:43:00.577413+00:00",
+      "http_status": 200,
+      "duration_ms": 121,
+      "record_count": 238,
+      "attempts": 1
+    },
+    "source_response_path": "C:\\Users\\David\\Desktop\\observatorio-sismico\\evidence\\002-ingesta-usgs-persistencia\\originals\\run-8276ca0991704d378c8e16468c06b0f8\\response.json",
+    "sha256": "3af89c8c6dea29e5202a544a165f1d84505ac25032be4a6f212e219b0a0bef3b",
+    "window_start": "2026-11-17T00:43:00.577413+00:00",
+    "window_end": "2026-11-18T00:43:00.577413+00:00"
+  },
+  "window_utc": {
+    "start": "2026-11-17T00:43:00.577413+00:00",
+    "end": "2026-11-18T00:43:00.577413+00:00"
+  },
+  "original": {
+    "features_total": 238,
+    "features_in_window": 238,
+    "unique_ids_in_window": 238,
+    "earthquakes_in_window": 235,
+    "unique_earthquake_ids": 235
+  },
+  "all": {
+    "original_unique_earthquake_ids": 235,
+    "api_total": 236,
+    "api_unique_ids": 236,
+    "stats_count": 236,
+    "db_unique_ids": 236,
+    "country_sum": 236,
+    "country_counts": {
+      "USA": 189,
+      "UNASSIGNED": 37,
+      "MEX": 2,
+      "BOL": 1,
+      "IRN": 1,
+      "NZL": 1,
+      "PAN": 1,
+      "PER": 1,
+      "PNG": 1,
+      "RUS": 1,
+      "TJK": 1
+    },
+    "api_country_counts_match_stats": true,
+    "db_country_counts_match_stats": true,
+    "original_missing_in_api": [],
+    "api_not_in_snapshot": [
+      "aka2026wufrkl"
+    ],
+    "api_not_in_db": [],
+    "db_not_in_api": [],
+    "filtered_checks": {
+      "USA": 189,
+      "UNASSIGNED": 37
+    },
+    "country_mismatched_ids": []
+  },
+  "mag_ge_4": {
+    "original_unique_earthquake_ids": 22,
+    "api_total": 22,
+    "api_unique_ids": 22,
+    "stats_count": 22,
+    "db_unique_ids": 22,
+    "country_sum": 22,
+    "country_counts": {
+      "UNASSIGNED": 13,
+      "BOL": 1,
+      "IRN": 1,
+      "MEX": 1,
+      "NZL": 1,
+      "PAN": 1,
+      "PER": 1,
+      "PNG": 1,
+      "RUS": 1,
+      "TJK": 1
+    },
+    "api_country_counts_match_stats": true,
+    "db_country_counts_match_stats": true,
+    "original_missing_in_api": [],
+    "api_not_in_snapshot": [],
+    "api_not_in_db": [],
+    "db_not_in_api": [],
+    "filtered_checks": {
+      "USA": 0,
+      "UNASSIGNED": 13
+    },
+    "country_mismatched_ids": []
+  },
+  "examples": [
+    {
+      "event_id": "aka2026wtepjd",
+      "longitude": -141.218,
+      "latitude": 61.565,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wtewol",
+      "longitude": -151.538,
+      "latitude": 63.083,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wtfdgw",
+      "longitude": -149.875,
+      "latitude": 61.527,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wtjbxs",
+      "longitude": -152.142,
+      "latitude": 59.953,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wtkxeh",
+      "longitude": -154.412,
+      "latitude": 56.907,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wtrbxd",
+      "longitude": -152.583,
+      "latitude": 60.029,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wtyvtw",
+      "longitude": -152.733,
+      "latitude": 59.467,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "us7000ty7j",
+      "longitude": -139.8841,
+      "latitude": 60.49,
+      "country_id": "CAN",
+      "country_name": "Canada",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "outside_audit_window": true,
+      "polygon_matches": [
+        {
+          "code": "CAN",
+          "name": "Canadá"
+        }
+      ]
+    },
+    {
+      "event_id": "us7000rlhy",
+      "longitude": -139.56,
+      "latitude": 60.4206,
+      "country_id": "CAN",
+      "country_name": "Canada",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "outside_audit_window": true,
+      "polygon_matches": [
+        {
+          "code": "CAN",
+          "name": "Canadá"
+        }
+      ]
+    }
+  ],
+  "usa_source_profile": {
+    "count_in_snapshot_window": 189,
+    "below_magnitude_4": 189,
+    "alaska_place_mentions": 45,
+    "networks": {
+      "ak": 42,
+      "av": 3,
+      "ci": 21,
+      "hv": 10,
+      "mb": 2,
+      "nc": 47,
+      "nm": 1,
+      "nn": 3,
+      "tx": 17,
+      "uu": 37,
+      "uw": 6
+    }
+  }
+}

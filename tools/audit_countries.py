@@ -1,6 +1,7 @@
 """Compare one saved USGS feed with API, statistics and PostgreSQL for a fixed UTC window."""
 import json
 import hashlib
+import argparse
 import subprocess
 from collections import Counter
 from datetime import datetime, timezone
@@ -51,25 +52,26 @@ def unique_by_id(features: list[dict]) -> dict[str, dict]:
     return {item["id"]: item for item in features if isinstance(item.get("id"), str)}
 
 
-def main() -> None:
-    snapshot_path = AUDIT / "all_day.geojson"
-    source_metadata = json.loads((AUDIT / "source-metadata.json").read_text(encoding="utf-8"))
+def main(audit_dir: Path = AUDIT, start: datetime = START, end: datetime = END,
+         write_result: bool = False) -> None:
+    snapshot_path = audit_dir / "all_day.geojson"
+    source_metadata = json.loads((audit_dir / "source-metadata.json").read_text(encoding="utf-8"))
     if hashlib.sha256(snapshot_path.read_bytes()).hexdigest() != source_metadata["sha256"]:
         raise ValueError("La instantánea USGS cambió desde la auditoría")
     original = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    start_ms, end_ms = (int(value.timestamp() * 1000) for value in (START, END))
+    start_ms, end_ms = (int(value.timestamp() * 1000) for value in (start, end))
     in_window = [feature for feature in original["features"] if start_ms <= (feature.get("properties") or {}).get("time", -1) < end_ms]
     earthquakes = [feature for feature in in_window if (feature.get("properties") or {}).get("type") == "earthquake"]
     source = unique_by_id(earthquakes)
     rows = docker_python(DB_CODE, str(start_ms), str(end_ms))
     database = {row[0]: row for row in rows}
     results = {"source": source_metadata,
-               "window_utc": {"start": START.isoformat(), "end": END.isoformat()},
+               "window_utc": {"start": start.isoformat(), "end": end.isoformat()},
                "original": {"features_total": len(original["features"]), "features_in_window": len(in_window),
                             "unique_ids_in_window": len(unique_by_id(in_window)), "earthquakes_in_window": len(earthquakes),
                             "unique_earthquake_ids": len(source)}}
     for label, minimum in (("all", None), ("mag_ge_4", 4)):
-        params = {"mode": "live", "start": START.isoformat(), "end": END.isoformat()}
+        params = {"mode": "live", "start": start.isoformat(), "end": end.isoformat()}
         if minimum is not None:
             params["min_mag"] = minimum
         events, metadata = event_rows(params)
@@ -90,6 +92,14 @@ def main() -> None:
                           "api_not_in_snapshot": sorted(api_ids - source_ids),
                           "api_not_in_db": sorted(api_ids - db_rows.keys()),
                           "db_not_in_api": sorted(db_rows.keys() - api_ids)}
+        filtered_checks = {}
+        for country in ("USA", "UNASSIGNED"):
+            country_events, country_metadata = event_rows({**params, "country_id": country})
+            country_stats = api("/api/estadisticas", {**params, "country_id": country})
+            expected_country = country_counts.get(country, 0)
+            assert len(country_events) == country_metadata["total"] == country_stats["count"] == expected_country
+            filtered_checks[country] = expected_country
+        results[label]["filtered_checks"] = filtered_checks
         results[label]["country_mismatched_ids"] = sorted(identifier for identifier in api_ids & db_rows.keys()
             if api_by_id[identifier]["properties"].get("country_id") != db_rows[identifier][5])
         assert len(api_ids) == metadata["total"] == stats["count"] == len(db_rows) == sum(country_counts.values())
@@ -117,7 +127,8 @@ def main() -> None:
                                      "below_magnitude_4": sum((item["properties"].get("mag") or 0) < 4 for item in original_usa),
                                      "alaska_place_mentions": sum("Alaska" in (item["properties"].get("place") or "") for item in original_usa),
                                      "networks": dict(Counter(item["properties"].get("net") or "ND" for item in original_usa))}
-    (AUDIT / "audit-result.json").write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if write_result:
+        (audit_dir / "audit-result.json").write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"original": results["original"],
                       "all": {key: value for key, value in results["all"].items() if key not in ("country_counts",)},
                       "mag_ge_4": {key: value for key, value in results["mag_ge_4"].items() if key not in ("country_counts",)},
@@ -127,4 +138,14 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--audit-dir", type=Path, default=AUDIT)
+    parser.add_argument("--start", default=START.isoformat())
+    parser.add_argument("--end", default=END.isoformat())
+    parser.add_argument("--write-result", action="store_true", help="Replace the saved result for this snapshot")
+    arguments = parser.parse_args()
+    window_start = datetime.fromisoformat(arguments.start)
+    window_end = datetime.fromisoformat(arguments.end)
+    if window_start.tzinfo is None or window_end.tzinfo is None or window_start >= window_end:
+        parser.error("La ventana debe tener zona horaria y start < end")
+    main(arguments.audit_dir, window_start, window_end, arguments.write_result)

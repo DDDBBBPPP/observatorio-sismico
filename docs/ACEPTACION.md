@@ -1,5 +1,71 @@
 # Aceptación observada — 2026-11-15
 
+## Vista inicial mundial y nueva medición — 18-11-2026
+
+La captura `audit-current-20261118/all_day.geojson` procede del feed recibido
+el **18-11 a las 00:43:00.577413 UTC**, run
+`run-8276ca0991704d378c8e16468c06b0f8`, SHA-256
+`3af89c8c6dea29e5202a544a165f1d84505ac25032be4a6f212e219b0a0bef3b`.
+Se fijó la ventana de las **00:43:00 del 17-11 a las 00:43:00 del 18-11 UTC**.
+
+| Vista de esa ventana | Original: terremotos únicos | API eventos | Estadísticas | PostgreSQL | Suma por países | USA |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Todos los registros | 235 | 236 | 236 | 236 | 236 | 189 |
+| Magnitud ≥4 | 22 | 22 | 22 | 22 | 22 | 0 |
+
+El original tenía 238 Features, de los que tres no eran `type=earthquake`.
+No faltó ninguno de los 235 terremotos originales en API. El ID adicional
+`aka2026wufrkl` venía de una respuesta conservada anterior y no estaba en
+esta instantánea. Los filtros `country_id=USA` devolvieron 189 y 0,
+respectivamente; `UNASSIGNED` devolvió 37 y 13. La auditoría contrastó
+también país por ID entre API y PostgreSQL y verificó muestras contra los
+polígonos. En esta ventana no hubo Canadá; los ejemplos CAN documentados
+pertenecen a otra fecha. Una repetición posterior de la auditoría de la
+ventana antigua añadió un ID nuevo al periodo: el feed y la BD pueden cambiar
+después de congelar un original, por lo que cada resultado lleva hora y hash.
+
+USA representa **189/236 (80,1 %)** en «Todos» y **0/22** con magnitud ≥4.
+Los 189 eventos USA de la instantánea eran menores de 4; 45 lugares
+mencionaban Alaska y aparecieron 11 redes de origen. Los recuentos son de
+eventos comunicados a USGS, no una medida comparable de riesgo o actividad
+real mundial. «Sin país asignado» incluye mar y puntos fuera de polígonos.
+
+El nuevo inicio es compacto, muestra arriba periodo UTC exacto, última
+consulta USGS, eventos, países con eventos y sin país, y abre en
+«Comparación mundial · magnitud ≥4». El botón «Todos los registros comunicados
+por USGS» restablece una ventana móvil de 24 h sin umbral. La prueba Angular
+confirmó vista inicial, cambio de vista, USA, Todos, ≥4, actualización
+conjunta de mapa/indicadores/tabla, recuperación tras error y replay;
+`1.12999999523163` km se presenta como `1,13` km y las fechas llevan UTC.
+La batería `python tools/run_checks.py` pasó con límites individuales;
+build Angular 3,305 s y aviso CommonJS de Leaflet. El despliegue Netlify
+`6afcf624552b6cba53bcfec2` sirve el bundle `main-LKXNB4DU.js`; los
+assets, la API por ngrok y CORS respondieron 200. El navegador integrado
+devolvió `[]`, así que **faltan capturas y validación visual real de
+escritorio/móvil**.
+
+El monitor previo (00:13:39–00:38:39 UTC) tuvo seis muestras, sin huecos,
+servicios no sanos, errores ni lag, y se detuvo para no mezclar versiones y
+el reinicio de pruebas. La nueva medición comenzó a las **00:50:16 UTC**,
+después de publicar y verificar el panel. Su primera muestra: cinco servicios
+sanos, 237 eventos live en la ventana móvil, última consulta USGS con 58,9 s
+de antigüedad, cero errores y lag 0. `complete_24h=false`; evaluación final
+pendiente tras 24 horas reales.
+
+### Cobertura de rúbrica comprobada
+
+El enunciado tiene cinco criterios sin ponderación adicional. Como auditoría
+de evidencias, **4 de 5 criterios están plenamente comprobados (80 %)**;
+esto no es una nota ni afirma disponibilidad de 24 horas.
+
+| Criterio | Evidencia | Estado |
+| --- | --- | --- |
+| Extracción | Original USGS con metadatos/hash, feed periódico, filtros y tipos | Verificado |
+| Calidad | Seis dimensiones documentadas, cuarentena, nulos y contraste de IDs/recuentos | Verificado |
+| Modelado | Versiones, claves, polígonos e idempotencia con pruebas de reinicio | Verificado |
+| Análisis | API, filtros, países, gráficos y comparación probados por código; faltan vistas reales escritorio/móvil | Parcial |
+| Reflexión | Tres tamaños medidos, índice/secuencial, memoria, costes y límites documentados | Verificado |
+
 ## Auditoría por país y publicación — 18-11-2026
 
 Se preservó el `all_day.geojson` de USGS recibido a las **00:13:46 UTC**,

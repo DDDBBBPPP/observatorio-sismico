@@ -1,5 +1,32 @@
 # Estado del proyecto
 
+## Vista mundial inicial y nueva medición — 18-11-2026
+
+- Rama `002-ingesta-usgs-persistencia`, PR #1 en borrador. Se conservaron
+  PostgreSQL, volúmenes y los 18.302 registros históricos; no se fusionó.
+- Instantánea USGS recibida a las 00:43:00 UTC, SHA-256
+  `3af89c8c6dea29e5202a544a165f1d84505ac25032be4a6f212e219b0a0bef3b`.
+  En la ventana fija de 24 horas hubo 235 IDs `earthquake` originales y 236
+  en API, estadísticas y PostgreSQL. El ID extra persistía de un feed anterior;
+  no faltó ninguno del original. La suma de países fue 236. USA: 189/236;
+  magnitud ≥4: 22 en todas las fuentes y USA 0. El feed móvil ya había subido
+  a 237 al comenzar la nueva medición. Los terremotos pequeños tienen cobertura
+  desigual y este reparto no estima actividad mundial ni riesgo.
+- Nuevo panel publicado en Netlify, despliegue `6afcf624552b6cba53bcfec2`:
+  cabecera compacta, periodo UTC y consulta USGS arriba, vista inicial mundial
+  con magnitud ≥4 y vista de todos los registros. Conserva filtros, mapa,
+  gráficos, tabla y replay. Pruebas Angular y build acotado superados; assets
+  públicos, API y CORS comprobados. El navegador integrado no ofreció sesión
+  (`[]`); quedan pendientes capturas y revisión visual escritorio/móvil.
+- Monitor anterior detenido después de seis muestras y 25 minutos para separar
+  versiones. Nuevo monitor iniciado **18-11-2026 00:50:16 UTC**, PID 15204.
+  Primera muestra: cinco servicios sanos, cero errores, consulta USGS de 58,9 s,
+  lag 0. La prueba definitiva de 24 h sigue **pendiente**. Evaluar mañana
+  `monitor-final-20261118.jsonl` con `tools/evaluate_monitor.py`.
+- Cobertura de evidencias de la rúbrica: cuatro de cinco criterios completos
+  (80 %), análisis parcialmente verificado por ausencia de navegador. No es
+  una calificación ni sustituye la observación de 24 horas.
+
 ## Auditoría y publicación del panel — 18-11-2026
 
 - Instantánea USGS `all_day.geojson` de las 00:13:46 UTC preservada con

@@ -29,46 +29,50 @@ breve con límite de tiempo:
 python tools/monitor_24h.py --once --output evidence/002-ingesta-usgs-persistencia/monitor-smoke.jsonl
 ```
 
-Para iniciar la prueba larga en segundo plano sin bloquear PowerShell:
+La medición definitiva **ya está en marcha**. Para iniciar otra en el futuro,
+usar otro nombre de salida y no ejecutar una segunda instancia simultánea:
 
 ```powershell
-$probe = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('tools/monitor_24h.py','--duration-hours','24','--interval-seconds','300') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput 'evidence/002-ingesta-usgs-persistencia/monitor-24h.stdout.log' -RedirectStandardError 'evidence/002-ingesta-usgs-persistencia/monitor-24h.stderr.log'
-$probe.Id | Set-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.pid
+$probe = Start-Process -FilePath (Get-Command python).Source -ArgumentList @('tools/monitor_24h.py','--duration-hours','24','--interval-seconds','300','--output','evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl') -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -PassThru -RedirectStandardOutput 'evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.stdout.log' -RedirectStandardError 'evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.stderr.log'
+$probe.Id | Set-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.pid
 ```
 
-Cada línea de `evidence/002-ingesta-usgs-persistencia/monitor-24h.jsonl`
+Cada línea de `evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl`
 contiene fecha UTC, salud de los cinco servicios, última consulta USGS
 correcta, recuentos live/histórico/replay/cuarentena, errores de descarga y
 retraso del grupo consumidor Kafka cuando se puede leer. Consultar la última
 muestra con:
 
 ```powershell
-Get-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.jsonl | Select-Object -Last 1
+Get-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl | Select-Object -Last 1
 ```
 
 Para detenerla antes de completar las 24 horas:
 
 ```powershell
-Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.pid))
+Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.pid))
 ```
 
-El monitor de esta revisión empezó el **18-11-2026 a las 00:13:39 UTC**
-(01:13:39 en Madrid), PID guardado en `monitor-24h.pid`. La primera muestra
-registró cinco servicios sanos, cero errores y lag Kafka 0. Evaluar mañana
+La medición previa empezó el 18-11 a las 00:13:39 UTC y se detuvo tras seis
+muestras en 25 minutos para separar el rediseño y el reinicio de pruebas.
+La nueva comenzó el **18-11-2026 a las 00:50:16 UTC** (01:50:16 en Madrid),
+PID 15204. La primera muestra registró cinco servicios sanos, cero errores,
+consulta USGS de 58,9 segundos de antigüedad y lag Kafka 0. Evaluar mañana
 la cadencia, huecos mayores de 450 segundos, servicios no sanos, antigüedad
 de la consulta USGS mayor de diez minutos, errores y lag con:
 
 ```powershell
-python tools/evaluate_monitor.py
+python tools/evaluate_monitor.py evidence/002-ingesta-usgs-persistencia/monitor-final-20261118.jsonl
 ```
 
 `complete_24h` solo pasa a `true` cuando las muestras abarcan al menos 24
 horas. La auditoría reproducible por país usa la instantánea conservada en
-`evidence/002-ingesta-usgs-persistencia/audit-country-20261117/all_day.geojson`
-y la ventana fija `2026-11-17T12:00:00Z` a `23:00:00Z`:
+`evidence/002-ingesta-usgs-persistencia/audit-current-20261118/all_day.geojson`
+y la ventana UTC de 24 horas que termina el `2026-11-18T00:43:00.577413Z`:
 
 ```powershell
-python tools/audit_countries.py
+$m = Get-Content evidence/002-ingesta-usgs-persistencia/audit-current-20261118/source-metadata.json -Raw | ConvertFrom-Json
+python tools/audit_countries.py --audit-dir evidence/002-ingesta-usgs-persistencia/audit-current-20261118 --start $m.window_start --end $m.window_end
 python tools/run_checks.py --skip-kafka
 ```
 
@@ -76,8 +80,25 @@ La opción `--skip-kafka` deja al consumidor en marcha durante la medición de
 24 horas; la prueba Kafka con reinicio ya se ejecutó antes de iniciar el
 monitor. El panel publicado en
 `https://stellar-basbousa-cee41b.netlify.app/` corresponde al despliegue
-Netlify `6afcef8a47d80fa7d8a964ed` de esta revisión. **Un build local
+Netlify `6afcf624552b6cba53bcfec2` de esta revisión. **Un build local
 posterior no actualiza automáticamente esa web:** requiere otro despliegue.
+
+El panel arranca en **«Comparación mundial · magnitud ≥4»** para reducir el
+sesgo de los terremotos pequeños. **«Todos los registros comunicados por
+USGS»** permite explorar el feed completo; ambos botones reinician país y
+periodo a una ventana móvil de 24 horas. Los filtros avanzados permiten
+país, fechas UTC, magnitud y replay. El periodo exacto aplicado aparece arriba
+y «Restablecer filtros» vuelve a la vista rápida elegida. Los recuentos por
+país no representan riesgo sísmico ni cobertura mundial uniforme.
+
+Comprobación visual pendiente en navegador: abrir la [web publicada](https://stellar-basbousa-cee41b.netlify.app/)
+en escritorio y móvil; confirmar que inicia en comparación ≥4; cambiar a
+«Todos»; aplicar USA y después magnitud ≥4; volver a Todos; comprobar en cada
+paso que periodo y filtros visibles, indicadores, mapa, distribución y tabla
+coinciden con `/api/eventos` y `/api/estadisticas`; abrir detalles del mapa y
+verificar fechas/profundidad; comprobar replay y estado de error de API. El
+navegador integrado no tuvo sesiones disponibles para realizar esta revisión
+ni obtener capturas en esta ejecución.
 
 ## Instalación en Windows
 

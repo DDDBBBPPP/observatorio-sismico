@@ -13,6 +13,8 @@ type Country = { code: string; name: string };
 type CountryStat = { country_id: string; country_name: string; count: number };
 type CountryBin = Bin & { code: string };
 type Statistics = { count: number; period: { start: string; end: string }; filters: { min_mag: number | null; country_id: string | null }; hourly_utc: { hour_utc: string; count: number }[]; countries: CountryStat[]; distributions: { magnitude: { bins: Bin[]; null_count: number }; depth_km: { bins: Bin[]; null_count: number } }; historical_comparison?: { average_for_window: number; current_window_events: number; min_mag: number; window_days: number; events: number } };
+type QuickView = 'comparison' | 'all';
+const quickFilters = (view: QuickView): FilterState => ({ ...emptyFilters('live'), minMag: view === 'comparison' ? '4' : '' });
 
 @Component({
   selector: 'app-root', standalone: true, imports: [CommonModule, LeafletDirective],
@@ -36,16 +38,24 @@ export class AppComponent implements OnDestroy {
   readonly appliedPeriod = signal('Esperando respuesta de la API');
   readonly start = signal('');
   readonly end = signal('');
-  readonly minMag = signal('');
+  readonly minMag = signal('4');
   readonly country = signal('');
   readonly viewMode = signal<'live' | 'replay'>('live');
-  readonly applied = signal<FilterState>(emptyFilters());
+  readonly applied = signal<FilterState>(quickFilters('comparison'));
+  readonly quickView = signal<QuickView>('comparison');
   readonly pending = computed(() => JSON.stringify(this.draft()) !== JSON.stringify(this.applied()));
+  readonly activeQuickView = computed(() => {
+    const selected = this.applied();
+    if (selected.viewMode !== 'live' || selected.country || selected.start || selected.end) return null;
+    if (selected.minMag === '4') return 'comparison';
+    if (!selected.minMag) return 'all';
+    return null;
+  });
   readonly appliedLabel = computed(() => {
     const selected = this.applied();
     const period = selected.start || selected.end ? `${selected.start || '24 h antes del final'} → ${selected.end || 'ahora'} UTC` : 'últimas 24 h UTC';
     const name = selected.country === 'UNASSIGNED' ? 'Sin país asignado' : this.countryOptions().find(item => item.code === selected.country)?.name;
-    return `${selected.viewMode === 'replay' ? 'REPRODUCCIÓN' : 'Datos reales'} · ${period} · magnitud ${selected.minMag ? `≥${selected.minMag}` : 'todas'} · ${selected.country ? `${name || selected.country}${name ? ` (${selected.country})` : ''}` : 'todos los países'}`;
+    return `${selected.viewMode === 'replay' ? 'REPRODUCCIÓN' : 'Datos reales'} · ${period} · magnitud ${selected.minMag ? `≥${selected.minMag}` : 'todas'} · ${selected.country ? `${name || selected.country}${name ? ` (${selected.country})` : ''}` : 'mundo'}`;
   });
   readonly truncated = signal(false);
   readonly tableEvents = signal<FeatureCollection<Point, Properties>['features']>([]);
@@ -135,7 +145,7 @@ export class AppComponent implements OnDestroy {
         const depthOk = typeof depth === 'number' && Number.isFinite(depth);
         const color = !depthOk ? '#64748b' : depth < 70 ? '#e8a317' : depth < 300 ? '#e35b37' : '#7b3fb6';
         const popup = document.createElement('div');
-        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${magnitude ?? 'ND'}\nProfundidad: ${depthOk ? depth + ' km' : 'ND'}\nFecha original UTC: ${this.date(p.time)}\n${selected.viewMode === 'replay' ? `Reproducido UTC: ${this.replayDate(p.replay_at)}\n` : ''}País: ${this.countryDisplay(p.country_id, p.country_name)}\nID: ${feature.id ?? 'ND'}`;
+        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${this.formatMagnitude(magnitude)}\nProfundidad: ${depthOk ? this.formatDepth(depth) + ' km' : 'ND'}\nFecha original: ${this.date(p.time)}\n${selected.viewMode === 'replay' ? `Reproducido: ${this.replayDate(p.replay_at)}\n` : ''}País: ${this.countryDisplay(p.country_id, p.country_name)}\nID: ${feature.id ?? 'ND'}`;
         const point = L.latLng(lat, lon);
         positions.push(point);
         L.circleMarker(point, { radius: magnitude === null ? 4 : Math.max(3, Math.min(18, 3 + (magnitude + 1) * 2)), color, fillColor: color, fillOpacity: .75, weight: 1 }).bindPopup(popup).addTo(next);
@@ -150,7 +160,7 @@ export class AppComponent implements OnDestroy {
       this.count.set(positions.length);
       this.omitted.set(omitted);
       this.truncated.set(Boolean(data.metadata?.truncated));
-      this.lastRead.set(new Date().toISOString());
+      this.lastRead.set(this.date(Date.now()));
       this.generated.set(this.date(data.metadata?.generated));
       this.tableEvents.set(data.features.slice(0, 100));
       this.latestEvent.set(data.features.length ? this.date(data.features[0].properties.time) : 'Sin eventos en el filtro');
@@ -179,6 +189,13 @@ export class AppComponent implements OnDestroy {
     this[name].set((event.target as HTMLInputElement).value);
   }
   applyFilters(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.draft(), true); }
+  selectQuickView(view: QuickView): void {
+    const selected = quickFilters(view);
+    this.quickView.set(view);
+    this.viewMode.set('live'); this.start.set(''); this.end.set('');
+    this.minMag.set(selected.minMag); this.country.set('');
+    if (this.currentConfig) void this.refresh(this.currentConfig, selected, true);
+  }
   retry(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.applied()); }
   fitMap(): void {
     if (!this.map) return;
@@ -187,14 +204,14 @@ export class AppComponent implements OnDestroy {
     else this.map.setView(this.options.center!, this.options.zoom!);
   }
   clearFilters(): void {
-    const empty = emptyFilters(this.viewMode());
-    this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(''); this.country.set('');
+    const empty = this.viewMode() === 'replay' ? emptyFilters('replay') : quickFilters(this.quickView());
+    this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(empty.minMag); this.country.set('');
     if (this.currentConfig) void this.refresh(this.currentConfig, empty, true);
   }
   setViewMode(event: Event): void {
     const viewMode = (event.target as HTMLSelectElement).value === 'replay' ? 'replay' : 'live';
-    const empty = emptyFilters(viewMode);
-    this.viewMode.set(viewMode); this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(''); this.country.set('');
+    const empty = viewMode === 'replay' ? emptyFilters('replay') : quickFilters(this.quickView());
+    this.viewMode.set(viewMode); this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(empty.minMag); this.country.set('');
     if (this.currentConfig) void this.refresh(this.currentConfig, empty, true);
   }
   barWidth(count: number, values: { count: number }[]): number {
@@ -208,6 +225,8 @@ export class AppComponent implements OnDestroy {
     return code && code !== 'UNASSIGNED' ? `${this.countryName(code, fallback)} (${code})` : 'Sin país asignado';
   }
   percent(count: number, total: number): number { return total > 0 ? 100 * count / total : 0; }
+  assignedCountryCount(countries: CountryStat[]): number { return countries.filter(item => item.country_id !== 'UNASSIGNED').length; }
+  unassignedCount(countries: CountryStat[]): number { return countries.find(item => item.country_id === 'UNASSIGNED')?.count ?? 0; }
   countryChart(countries: Statistics['countries']): CountryBin[] {
     const selected = countries.slice(0, 6);
     const unassigned = countries.find(item => item.country_id === 'UNASSIGNED');
@@ -225,14 +244,20 @@ export class AppComponent implements OnDestroy {
   date(value: unknown): string {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 'ND';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? 'ND' : date.toISOString();
+    return Number.isNaN(date.getTime()) ? 'ND' : `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
   }
-  depth(feature: FeatureCollection<Point, Properties>['features'][number]): number | 'ND' {
+  formatDepth(value: unknown): string {
+    return typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value) : 'ND';
+  }
+  formatMagnitude(value: unknown): string {
+    return typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value) : 'ND';
+  }
+  depth(feature: FeatureCollection<Point, Properties>['features'][number]): string {
     const value = feature.geometry.coordinates[2];
-    return typeof value === 'number' && Number.isFinite(value) ? value : 'ND';
+    return this.formatDepth(value);
   }
   replayDate(value: unknown): string {
-    return typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? new Date(value).toISOString() : 'ND';
+    return typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? this.date(Date.parse(value)) : 'ND';
   }
   ngOnDestroy(): void { this.destroyed = true; clearTimeout(this.timer); this.controller.abort(); }
 }

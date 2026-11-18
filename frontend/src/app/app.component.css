@@ -139,3 +139,45 @@ footer { padding: 22px 2px; border-top: 1px solid #d3dfda; }
 .other-details li strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mobile-table-hint { display: none; color: #506476; font-size: .8rem; }
 @media (max-width: 700px) { .context-note { grid-template-columns: 1fr; } .status-main { flex-wrap: wrap; } .map-toolbar { flex-wrap: wrap; } .country-bars li { grid-template-columns: minmax(95px, 36%) minmax(25px, 1fr) minmax(88px, auto); } .mobile-table-hint { display: block; } }
+
+/* Compact dashboard entry */
+.masthead { margin-bottom: 12px; padding-top: 12px; padding-bottom: 16px; border-radius: 0 0 18px 18px; background: #123c47; }
+.masthead-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { font-size: .76rem; letter-spacing: .08em; }
+.brand-mark { width: 28px; height: 28px; font-size: 1.25rem; }
+.brand small { font-size: .56rem; }
+.page-nav { gap: 2px; }
+.page-nav a { padding: 6px 9px; border: 0; border-radius: 6px; color: #d4e9e7; font-size: .78rem; }
+.hero-copy { max-width: none; padding: 13px 0 0; }
+.hero-copy h1 { margin: 0 0 3px; font-size: clamp(1.4rem, 2.1vw, 2.1rem); line-height: 1.2; letter-spacing: -.035em; }
+.masthead .hero-copy > p:last-child { max-width: 860px; color: #c4ddda; font-size: .85rem; line-height: 1.4; }
+.status-panel { margin: 12px 0 14px; padding: clamp(16px, 2vw, 24px); background: #fff; }
+.overview-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+.overview-head > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.overview-head > div:first-child > strong { color: #123c47; font-size: clamp(1.1rem, 2vw, 1.5rem); font-variant-numeric: tabular-nums; line-height: 1.25; }
+.overview-head p { margin: 0; color: #4c6970; font-size: .78rem; }
+.fetch-stamp { display: grid; gap: 4px; min-width: 220px; padding: 10px 13px; border-radius: 9px; background: #edf6f3; }
+.fetch-stamp span { color: #406369; font-size: .7rem; font-weight: 750; text-transform: uppercase; letter-spacing: .045em; }
+.fetch-stamp strong { color: #105b56; font-size: .84rem; font-variant-numeric: tabular-nums; }
+.quick-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.quick-views button { display: grid; gap: 5px; min-height: 71px; padding: 11px 15px; border: 1px solid #b8d3ca; border-radius: 10px; background: #f4faf7; color: #174c4d; text-align: left; font-size: .89rem; font-weight: 500; }
+.quick-views button strong { line-height: 1.25; }
+.quick-views button span { color: #4e6a6c; font-size: .76rem; }
+.quick-views button.selected { border-color: #126b68; background: #126b68; color: #fff; box-shadow: 0 3px 10px #126b6828; }
+.quick-views button.selected span { color: #d5f2e8; }
+.quick-views button:focus-visible { outline: 3px solid #77cbd1; outline-offset: 2px; }
+.overview-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.overview-metrics > div { display: grid; align-content: center; gap: 4px; min-height: 73px; padding: 10px 13px; border: 1px solid #d8e6e0; border-radius: 9px; background: #fbfdfb; }
+.overview-metrics span { color: #557078; font-size: .72rem; font-weight: 650; }
+.overview-metrics strong { color: #124a50; font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.overview-metrics .metric-date { font-size: .95rem; }
+.status-main { align-items: center; justify-content: flex-start; gap: 12px; margin-top: 14px; padding-top: 10px; border-top: 1px solid #e4ece8; }
+.status-main p { margin: 0; color: #3f5e63; font-size: .79rem; }
+.status-main strong { font-size: .79rem; }
+.status-main .loading { margin-left: auto; }
+.timing-details { margin-top: 9px; color: #647b7b; font-size: .73rem; }
+.timing-details summary { width: max-content; cursor: pointer; }
+.timing-details p { margin: 5px 0 0; }
+.filter-panel { margin-top: 12px; }
+@media (max-width: 900px) { .overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .masthead { padding-top: 10px; padding-bottom: 14px; } .masthead-row { align-items: start; flex-wrap: wrap; gap: 7px; } .page-nav a { padding: 4px 7px; } .hero-copy { padding-top: 9px; } .hero-copy h1 { font-size: 1.37rem; } .masthead .hero-copy > p:last-child { font-size: .78rem; } .overview-head { display: grid; gap: 10px; } .fetch-stamp { min-width: 0; } .quick-views { grid-template-columns: 1fr; gap: 7px; margin: 12px 0; } .quick-views button { min-height: 60px; } .overview-metrics > div { min-height: 64px; } .overview-metrics strong { font-size: 1.2rem; } .overview-metrics .metric-date { font-size: .78rem; } }

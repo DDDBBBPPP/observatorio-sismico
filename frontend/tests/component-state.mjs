@@ -98,11 +98,17 @@ async function settle() {
 
 try {
   await app.onMapReady(map);
-  assert.equal(app.count(), 2);
-  assert.equal(markerCalls, 2);
+  assert.equal(app.count(), 1, 'Initial view must use magnitude ≥4');
+  assert.equal(app.applied().minMag, '4');
+  assert.equal(app.activeQuickView(), 'comparison');
+  assert.equal(requests.at(-1).searchParams.get('min_mag'), '4');
+  assert.equal(app.stats().count, 1);
+  assert.equal(app.tableEvents()[0].properties.country_id, 'ESP');
+  assert.equal(markerCalls, 1);
   assert.equal(app.countryDisplay('CAN', 'Canada'), 'Canadá (CAN)');
-  assert.equal(app.countryChart(app.stats().countries)[0].label, 'Estados Unidos (USA)');
-  assert.equal(app.percent(1, app.stats().count), 50);
+  assert.equal(app.formatDepth(1.12999999523163), '1,13');
+  assert.equal(app.formatDepth(null), 'ND');
+  assert.equal(app.date(1794787200000).endsWith(' UTC'), true);
   assert.deepEqual(app.otherCountries([
     ...Array.from({ length: 7 }, (_, i) => ({ country_id: `X${i}`, country_name: `Country ${i}`, count: 8 - i })),
     { country_id: 'UNASSIGNED', country_name: 'Sin país asignado', count: 1 }
@@ -110,6 +116,14 @@ try {
   assert.match(app.appliedPeriod(), /2026-11-17 00:00/);
   assert.match(app.apiStale(), /consulta USGS correcta/);
   assert.equal(app.countryOptions().find(item => item.code === 'USA').name, 'Estados Unidos');
+  app.selectQuickView('all');
+  await settle();
+  assert.equal(app.count(), 2);
+  assert.equal(markerCalls, 3);
+  assert.equal(app.activeQuickView(), 'all');
+  assert.equal(requests.at(-1).searchParams.has('min_mag'), false);
+  assert.equal(app.countryChart(app.stats().countries)[0].label, 'Estados Unidos (USA)');
+  assert.equal(app.percent(1, app.stats().count), 50);
   const initialRequests = requests.length;
   app.applyFilter('country', { target: { value: 'USA' } });
   assert.equal(app.pending(), true);
@@ -119,7 +133,7 @@ try {
   assert.equal(app.loading(), true);
   await settle();
   assert.equal(app.count(), 1);
-  assert.equal(markerCalls, 3, 'The map must redraw for the selected filter');
+  assert.equal(markerCalls, 4, 'The map must redraw for the selected filter');
   assert.equal(app.tableEvents()[0].properties.country_id, 'USA');
   assert.equal(app.stats().count, 1);
   assert.equal(app.countryChart(app.stats().countries)[0].count, 1);
@@ -127,10 +141,26 @@ try {
   assert.match(app.appliedLabel(), /Estados Unidos \(USA\)/);
   assert.ok(recenterCount > 0, 'Applying a country must frame its result');
   assert.equal(requests.at(-2).search, requests.at(-1).search, 'Both endpoints must receive identical filters');
+  app.applyFilter('minMag', { target: { value: '4' } });
+  app.applyFilters();
+  await settle();
+  assert.equal(app.count(), 0, 'USA and magnitude ≥4 must update the map');
+  assert.equal(app.stats().count, 0, 'The chart must use the same filter');
+  assert.equal(app.tableEvents().length, 0, 'The table must use the same filter');
+  assert.equal(requests.at(-2).searchParams.get('min_mag'), '4');
+  assert.equal(requests.at(-2).searchParams.get('country_id'), 'USA');
   app.clearFilters();
   await settle();
   assert.equal(app.count(), 2);
+  assert.equal(app.minMag(), '', 'Reset must return to the chosen quick view');
   assert.equal(app.country(), '');
+
+  app.selectQuickView('comparison');
+  await settle();
+  assert.equal(app.count(), 1);
+  assert.equal(app.activeQuickView(), 'comparison');
+  app.selectQuickView('all');
+  await settle();
 
   const beforeFailure = app.lastRead();
   apiUp = false;

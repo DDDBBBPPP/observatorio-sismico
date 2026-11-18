@@ -1,12 +1,14 @@
 """Check the published Netlify bundle, ngrok API and CORS from the public origin."""
 import json
 import re
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
 SITE = "https://stellar-basbousa-cee41b.netlify.app"
+LOCAL_INDEX = Path(__file__).resolve().parents[1] / "frontend/dist/observatorio/browser/index.html"
 
 
 def get(url: str, headers: dict | None = None, method: str = "GET"):
@@ -23,10 +25,15 @@ assert status == 200
 index = body.decode("utf-8")
 assets = re.findall(r'(?:src|href)="([^"]+\.(?:js|css))"', index)
 assert any(asset.startswith("main-") for asset in assets)
+local_assets = re.findall(r'(?:src|href)="([^"]+\.(?:js|css))"', LOCAL_INDEX.read_text(encoding="utf-8"))
+assert set(assets) == set(local_assets), "Public site does not serve this local build"
 for asset in assets:
     status, _, data = get(SITE + "/" + asset)
     print("asset", asset, status, len(data))
     assert status == 200, f"Public asset failed: {asset}"
+    if asset.startswith("main-"):
+        script = data.decode("utf-8")
+        assert "Comparaci" in script and "mundial" in script and "Todos los registros" in script
 config_status, _, config_bytes = get(SITE + "/config.json")
 assert config_status == 200
 config = json.loads(config_bytes)
