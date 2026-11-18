@@ -1,5 +1,29 @@
 # Aceptación observada — 2026-11-15
 
+## Procedencia 17:23 y revisión SQL — 18-11-2026
+
+La [auditoría solo lectura](AUDITORIA-PROCEDENCIA-1723.md) fijó la ventana
+`[2026-11-17 17:23:04.112254, 2026-11-18 17:23:04.112254)` UTC, live,
+`type=earthquake`, sin país, magnitud ni profundidad mínimos y sin sintéticos.
+La respuesta USGS `run-69a12a1cd6594e70abf0483afaf3bcc2` contiene
+**191 features únicas**, de las que **188** son terremotos; tres son
+explosión/cantera. `event_version` conserva los 188 pares `(ID, updated)`.
+Al corte, la reconstrucción SQL da 192 IDs: los 188 del archivo más cuatro
+verificados en originales USGS anteriores. Coincide en recuento con la
+muestra del monitor, que **no guardó los IDs de la respuesta API**; no se
+declara identidad exacta de aquella respuesta. A las 20:12 UTC, el estado
+actual y la API paginada/estadísticas coincidieron en 199 por incorporaciones
+posteriores dentro de la ventana fija. El JSON con filtros, diferencias,
+respuestas y SHA-256 está junto al informe.
+
+La inspección `SELECT` de índices confirmó `UNIQUE(event_id, updated)` y un
+segundo B-tree explícito con las mismas columnas. El segundo ocupaba
+1.269.760 bytes; no se eliminó ni se modificó el esquema. El
+[modelo](MODELO-DATOS.md) distingue relaciones impuestas por FK de las
+lógicas y separa hechos, mediciones y propuestas. El monitor siguió activo;
+esta revisión no ejecutó pruebas que detengan servicios. Las 24 horas siguen
+pendientes.
+
 ## Profundidad, trazabilidad y capturas reales — 18-11-2026
 
 El contrato acepta `min_depth_km` y `max_depth_km` opcionales e inclusivos en

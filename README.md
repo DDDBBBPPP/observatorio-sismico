@@ -29,7 +29,8 @@ USGS → productor Python → Kafka → consumidor Python → PostgreSQL
 Angular se ejecuta aparte: localmente con `npm start` o publicado en Netlify.
 El mapa usa Leaflet y el catálogo Natural Earth incluido en el repositorio.
 El túnel ngrok publica **solo la API** por HTTPS; Kafka y PostgreSQL no se
-exponen. Véanse el [modelo](docs/MODELO-DATOS.md) y el
+exponen. Véanse el [modelo](docs/MODELO-DATOS.md), el
+[SQL del esquema](consumer/src/migrations/001_ingestion_schema.sql) y el
 [diccionario](docs/DICCIONARIO-DATOS.md).
 
 ## Tres conjuntos diferentes

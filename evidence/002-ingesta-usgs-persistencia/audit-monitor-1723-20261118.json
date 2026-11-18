@@ -1,0 +1,549 @@
+{
+  "audited_at_utc": "2026-11-18T20:12:24.612277+00:00",
+  "monitor_sample_utc": "2026-11-18T17:23:04.112254+00:00",
+  "monitor_observation": {
+    "source_last_fetch": {
+      "run_id": "run-69a12a1cd6594e70abf0483afaf3bcc2",
+      "received_at": "2026-11-18T17:22:26.313169+00:00",
+      "record_count": 191
+    },
+    "live_24h": 192,
+    "errors": []
+  },
+  "source_run": "run-69a12a1cd6594e70abf0483afaf3bcc2",
+  "source_path": "evidence/002-ingesta-usgs-persistencia/originals/run-69a12a1cd6594e70abf0483afaf3bcc2/response.json",
+  "source_sha256": "6b6655ddad52759db491b82e3f8a813a06f90d8e0e9501b08b33e6f4b3075114",
+  "source_metadata": {
+    "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+    "requested_at": "2026-11-18T17:22:26.170184+00:00",
+    "received_at": "2026-11-18T17:22:26.313169+00:00",
+    "http_status": 200,
+    "duration_ms": 142,
+    "record_count": 191,
+    "attempts": 1
+  },
+  "source_run_db": [
+    [
+      "run-69a12a1cd6594e70abf0483afaf3bcc2",
+      "2026-11-18 17:22:32.216655+00:00",
+      "2026-11-18 17:22:32.216655+00:00",
+      191,
+      1,
+      0,
+      "response-8608271cbad14ad09003dc689fc6ec3c",
+      "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+      "2026-11-18 17:22:26.170184+00:00",
+      "2026-11-18 17:22:26.313169+00:00",
+      200,
+      142,
+      191
+    ]
+  ],
+  "source_run_versions": [
+    [
+      "ci41363351",
+      1795022465081,
+      1795022254520,
+      "2026-11-18 17:22:32.216655+00:00"
+    ]
+  ],
+  "window_utc": {
+    "start_inclusive": "2026-11-17T17:23:04.112254+00:00",
+    "end_exclusive": "2026-11-18T17:23:04.112254+00:00"
+  },
+  "filters": {
+    "mode": "live",
+    "type": "earthquake",
+    "min_mag": null,
+    "country_id": null,
+    "min_depth_km": null,
+    "max_depth_km": null,
+    "synthetic": false
+  },
+  "source_counts": {
+    "features": 191,
+    "unique_ids": 191,
+    "earthquakes": 188,
+    "earthquakes_in_window": 188,
+    "unique_ids_in_window": 188,
+    "non_earthquakes": [
+      {
+        "event_id": "uw714140061",
+        "type": "explosion"
+      },
+      {
+        "event_id": "ci41363095",
+        "type": "quarry blast"
+      },
+      {
+        "event_id": "ci41363087",
+        "type": "quarry blast"
+      }
+    ],
+    "earthquakes_outside_window": []
+  },
+  "db_counts": {
+    "version_rows_in_window": 594,
+    "version_ids_in_window": 199,
+    "version_rows_at_sample": 545,
+    "version_ids_at_sample": 192,
+    "current_ids_in_window_at_audit": 199,
+    "reconstructed_ids_at_sample": 192
+  },
+  "api_counts": {
+    "query_started_at_utc": "2026-11-18T20:12:24.468914+00:00",
+    "query_finished_at_utc": "2026-11-18T20:12:24.612277+00:00",
+    "pages": [
+      {
+        "page": 1,
+        "count": 100,
+        "total": 199,
+        "generated": 1795032744513
+      },
+      {
+        "page": 2,
+        "count": 99,
+        "total": 199,
+        "generated": 1795032744542
+      }
+    ],
+    "unique_ids": 199,
+    "statistics_count": 199,
+    "statistics_country_sum": 199
+  },
+  "differences": {
+    "source_only_vs_current": [],
+    "current_only_vs_source": [
+      "aka2026wvvyxt",
+      "hv75071942",
+      "pt26322050",
+      "us7000tywm",
+      "us7000tyx8",
+      "us7000tyzn",
+      "us7000tz1f",
+      "us7000tz1n",
+      "uw714140221",
+      "uw714140241",
+      "uw714140301"
+    ],
+    "source_only_vs_asof": [],
+    "asof_only_vs_source": [
+      "pt26322050",
+      "us7000tywm",
+      "us7000tyx8",
+      "us7000tyzn"
+    ],
+    "source_id_updated_missing_in_versions_at_sample": [],
+    "source_only_vs_api": [],
+    "api_only_vs_source": [
+      "aka2026wvvyxt",
+      "hv75071942",
+      "pt26322050",
+      "us7000tywm",
+      "us7000tyx8",
+      "us7000tyzn",
+      "us7000tz1f",
+      "us7000tz1n",
+      "uw714140221",
+      "uw714140241",
+      "uw714140301"
+    ],
+    "current_only_vs_api": [],
+    "api_only_vs_current": [],
+    "updated_mismatch_current_api": [],
+    "updated_mismatch_source_current": [
+      {
+        "event_id": "ci41363167",
+        "source": 1795015826111,
+        "current": 1795026884833
+      },
+      {
+        "event_id": "ci41363351",
+        "source": 1795022465081,
+        "current": 1795023821689
+      },
+      {
+        "event_id": "hv75071852",
+        "source": 1795006291970,
+        "current": 1795031909250
+      },
+      {
+        "event_id": "hv75071922",
+        "source": 1795019990760,
+        "current": 1795031458440
+      },
+      {
+        "event_id": "nc75467837",
+        "source": 1794969142908,
+        "current": 1795026179117
+      },
+      {
+        "event_id": "nm60629066",
+        "source": 1795020478181,
+        "current": 1795031668053
+      },
+      {
+        "event_id": "nn00927110",
+        "source": 1795000943513,
+        "current": 1795025810164
+      },
+      {
+        "event_id": "nn00927112",
+        "source": 1795017702040,
+        "current": 1795024142756
+      },
+      {
+        "event_id": "se60506583",
+        "source": 1795022356890,
+        "current": 1795032431561
+      },
+      {
+        "event_id": "us7000tyw8",
+        "source": 1795017682505,
+        "current": 1795027346740
+      },
+      {
+        "event_id": "us7000tz1a",
+        "source": 1795021625314,
+        "current": 1795025823821
+      },
+      {
+        "event_id": "us7000tz1c",
+        "source": 1795021562542,
+        "current": 1795026876007
+      }
+    ],
+    "updated_mismatch_source_asof": []
+  },
+  "additional_id_provenance": [
+    {
+      "event_id": "aka2026wvvyxt",
+      "version_updated": 1795025683679,
+      "first_version_run": "run-b606b48e11c1447596ba0f05be7f921f",
+      "response_id": "response-0c1e7c482a37433c8b77a80034b656a4",
+      "response_received_at": "2026-11-18 18:15:04.544015+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-b606b48e11c1447596ba0f05be7f921f/response.json",
+      "original_sha256": "47a63073161376377bcb48014d6074e48d40f45f1ffe2429e9a6c8cdf0984c74",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "hv75071942",
+      "version_updated": 1795031067320,
+      "first_version_run": "run-ee09f7f293804a69b79a7b25d5470be6",
+      "response_id": "response-22adf16786484bcfa15364b212322ce7",
+      "response_received_at": "2026-11-18 19:45:15.532824+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-ee09f7f293804a69b79a7b25d5470be6/response.json",
+      "original_sha256": "be51a8b65d48de7d0cd8515e662fd09f799e4bac1746cc01a1c7c5a75b67a9c4",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "pt26322050",
+      "version_updated": 1794969085018,
+      "first_version_run": "run-2c1934b0cb574f25a1ee9c8f9c6f8d15",
+      "response_id": "response-b3878debd1564d539369400bdb1e99c3",
+      "response_received_at": "2026-11-18 02:32:45.795448+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-2c1934b0cb574f25a1ee9c8f9c6f8d15/response.json",
+      "original_sha256": "1c24d08386033184a930ecba15a4e404ed47b91c2e8958738c4b16e7fbbd3ab1",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "us7000tywm",
+      "version_updated": 1794970912040,
+      "first_version_run": "run-5e137259c8c8447bbdfd9fba8668541e",
+      "response_id": "response-52f1fcccc759467d8802ce0354f93701",
+      "response_received_at": "2026-11-18 03:03:08.116144+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-5e137259c8c8447bbdfd9fba8668541e/response.json",
+      "original_sha256": "2e1305b0db25e086b3d65f4b0a86de241e988830b74b656d84b741ad74ae8d7f",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "us7000tyx8",
+      "version_updated": 1794975794040,
+      "first_version_run": "run-2c8de7ff8d624d7da466a8ce02963bdb",
+      "response_id": "response-7f5c0d0732c14c7fab14bfc846944ab5",
+      "response_received_at": "2026-11-18 04:24:15.094805+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-2c8de7ff8d624d7da466a8ce02963bdb/response.json",
+      "original_sha256": "b4f379a3f601aaf7ecf99050e730122b32a4714da76dcf02815407ac2b6a08f3",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "us7000tyzn",
+      "version_updated": 1795018014040,
+      "first_version_run": "run-a267ecf1d9b2454ebf0d19f6bde0f58b",
+      "response_id": "response-1631ed66de544e1eaed153bf1930a23c",
+      "response_received_at": "2026-11-18 16:07:54.064749+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-a267ecf1d9b2454ebf0d19f6bde0f58b/response.json",
+      "original_sha256": "92319d14cb0b82fea812d85b7058fcec1d0972fe35c1ac6799fd659ebf0cebe9",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "us7000tz1f",
+      "version_updated": 1795032122040,
+      "first_version_run": "run-4403102b3e004e0fa1f42276c8e5f28a",
+      "response_id": "response-1fab22b88ff345af95de673016f1d671",
+      "response_received_at": "2026-11-18 20:03:15.484236+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-4403102b3e004e0fa1f42276c8e5f28a/response.json",
+      "original_sha256": "bdfd54b393a9c2fad5728fd7d2fea5418b8f67b086c98bfed7521a5e2c9fb724",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "us7000tz1n",
+      "version_updated": 1795023498040,
+      "first_version_run": "run-8e566a1eba284302add9594dbd25d2ed",
+      "response_id": "response-7a06e2f0f0ac4477bb9257779e0c80dd",
+      "response_received_at": "2026-11-18 17:39:07.757532+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-8e566a1eba284302add9594dbd25d2ed/response.json",
+      "original_sha256": "1d9d64884ecfac86aa7401cf524a5c17a2207634f70ef9a164d634959f7202e0",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "uw714140221",
+      "version_updated": 1795026265600,
+      "first_version_run": "run-cff45c4e969a471aa1a2bbfcbaa227a4",
+      "response_id": "response-935283af647d4d88ae78a703550859ce",
+      "response_received_at": "2026-11-18 18:25:10.938505+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-cff45c4e969a471aa1a2bbfcbaa227a4/response.json",
+      "original_sha256": "897b83aaba10dfd82c68be5198bd98cb67d4b2b4b55fbeb121f5d5207e8acf3a",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "uw714140241",
+      "version_updated": 1795027102530,
+      "first_version_run": "run-633673cbb5254462a63b596516a4802c",
+      "response_id": "response-29a713ccb7844421bf8bafd1a50c652d",
+      "response_received_at": "2026-11-18 18:38:41.687236+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-633673cbb5254462a63b596516a4802c/response.json",
+      "original_sha256": "aa4e50fab7b463a8e2008ec4ffd7257855ccdb6f0c23036691c1ed03113989cb",
+      "id_updated_verified_in_original": true
+    },
+    {
+      "event_id": "uw714140301",
+      "version_updated": 1795028603550,
+      "first_version_run": "run-cd9e80c9d8f6456ab98248da177e4bd2",
+      "response_id": "response-75336fea75d445769a10a5cece337a25",
+      "response_received_at": "2026-11-18 19:03:31.129627+00:00",
+      "original_path": "evidence/002-ingesta-usgs-persistencia/originals/run-cd9e80c9d8f6456ab98248da177e4bd2/response.json",
+      "original_sha256": "f5f142fddbdbb5b120809dfd53c5cd3aae253024f6d72629a8ce651b942724ff",
+      "id_updated_verified_in_original": true
+    }
+  ],
+  "indexes": [
+    {
+      "name": "event_current_country_time_idx",
+      "bytes": 819200,
+      "definition": "CREATE INDEX event_current_country_time_idx ON public.event_current USING btree (country_id, event_time)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 889
+    },
+    {
+      "name": "event_current_event_time_idx",
+      "bytes": 1064960,
+      "definition": "CREATE INDEX event_current_event_time_idx ON public.event_current USING btree (event_time)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 29092
+    },
+    {
+      "name": "event_current_pkey",
+      "bytes": 1032192,
+      "definition": "CREATE UNIQUE INDEX event_current_pkey ON public.event_current USING btree (event_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 690
+    },
+    {
+      "name": "event_version_event_id_updated_key",
+      "bytes": 1245184,
+      "definition": "CREATE UNIQUE INDEX event_version_event_id_updated_key ON public.event_version USING btree (event_id, updated)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 656
+    },
+    {
+      "name": "event_version_event_updated_idx",
+      "bytes": 1269760,
+      "definition": "CREATE INDEX event_version_event_updated_idx ON public.event_version USING btree (event_id, updated)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 39
+    },
+    {
+      "name": "event_version_pkey",
+      "bytes": 507904,
+      "definition": "CREATE UNIQUE INDEX event_version_pkey ON public.event_version USING btree (event_version_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 108407
+    },
+    {
+      "name": "historical_interval_checkpoint_pkey",
+      "bytes": 16384,
+      "definition": "CREATE UNIQUE INDEX historical_interval_checkpoint_pkey ON public.historical_interval_checkpoint USING btree (run_id, interval_start)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 1
+    },
+    {
+      "name": "ingestion_run_pkey",
+      "bytes": 73728,
+      "definition": "CREATE UNIQUE INDEX ingestion_run_pkey ON public.ingestion_run USING btree (run_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 30322
+    },
+    {
+      "name": "ingestion_run_status_started_idx",
+      "bytes": 65536,
+      "definition": "CREATE INDEX ingestion_run_status_started_idx ON public.ingestion_run USING btree (status, started_at)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 0
+    },
+    {
+      "name": "quarantine_reason_created_idx",
+      "bytes": 32768,
+      "definition": "CREATE INDEX quarantine_reason_created_idx ON public.quarantine_record USING btree (reason_code, created_at)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 0
+    },
+    {
+      "name": "quarantine_record_pkey",
+      "bytes": 16384,
+      "definition": "CREATE UNIQUE INDEX quarantine_record_pkey ON public.quarantine_record USING btree (quarantine_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 0
+    },
+    {
+      "name": "replay_event_current_pkey",
+      "bytes": 16384,
+      "definition": "CREATE UNIQUE INDEX replay_event_current_pkey ON public.replay_event_current USING btree (event_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 0
+    },
+    {
+      "name": "replay_event_current_time_idx",
+      "bytes": 16384,
+      "definition": "CREATE INDEX replay_event_current_time_idx ON public.replay_event_current USING btree (event_time)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 651
+    },
+    {
+      "name": "replay_event_version_pkey",
+      "bytes": 16384,
+      "definition": "CREATE UNIQUE INDEX replay_event_version_pkey ON public.replay_event_version USING btree (event_id, updated)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 0
+    },
+    {
+      "name": "source_response_pkey",
+      "bytes": 81920,
+      "definition": "CREATE UNIQUE INDEX source_response_pkey ON public.source_response USING btree (response_id)",
+      "unique": true,
+      "idx_scan_since_stats_reset": 2312
+    },
+    {
+      "name": "source_response_run_received_idx",
+      "bytes": 81920,
+      "definition": "CREATE INDEX source_response_run_received_idx ON public.source_response USING btree (run_id, received_at)",
+      "unique": false,
+      "idx_scan_since_stats_reset": 5
+    }
+  ],
+  "constraints": [
+    [
+      "event_current",
+      "event_current_event_version_id_fkey",
+      "f",
+      "FOREIGN KEY (event_version_id) REFERENCES event_version(event_version_id)"
+    ],
+    [
+      "event_current",
+      "event_current_pkey",
+      "p",
+      "PRIMARY KEY (event_id)"
+    ],
+    [
+      "event_version",
+      "event_version_event_id_updated_key",
+      "u",
+      "UNIQUE (event_id, updated)"
+    ],
+    [
+      "event_version",
+      "event_version_mode_check",
+      "c",
+      "CHECK ((mode = ANY (ARRAY['live'::text, 'historical'::text, 'replay'::text])))"
+    ],
+    [
+      "event_version",
+      "event_version_pkey",
+      "p",
+      "PRIMARY KEY (event_version_id)"
+    ],
+    [
+      "event_version",
+      "event_version_run_id_fkey",
+      "f",
+      "FOREIGN KEY (run_id) REFERENCES ingestion_run(run_id)"
+    ],
+    [
+      "event_version",
+      "event_version_source_response_id_fkey",
+      "f",
+      "FOREIGN KEY (source_response_id) REFERENCES source_response(response_id)"
+    ],
+    [
+      "historical_interval_checkpoint",
+      "historical_interval_checkpoint_pkey",
+      "p",
+      "PRIMARY KEY (run_id, interval_start)"
+    ],
+    [
+      "historical_interval_checkpoint",
+      "historical_interval_checkpoint_run_id_fkey",
+      "f",
+      "FOREIGN KEY (run_id) REFERENCES ingestion_run(run_id)"
+    ],
+    [
+      "ingestion_run",
+      "ingestion_run_mode_check",
+      "c",
+      "CHECK ((mode = ANY (ARRAY['live'::text, 'historical'::text, 'replay'::text])))"
+    ],
+    [
+      "ingestion_run",
+      "ingestion_run_pkey",
+      "p",
+      "PRIMARY KEY (run_id)"
+    ],
+    [
+      "quarantine_record",
+      "quarantine_record_pkey",
+      "p",
+      "PRIMARY KEY (quarantine_id)"
+    ],
+    [
+      "quarantine_record",
+      "quarantine_record_run_id_fkey",
+      "f",
+      "FOREIGN KEY (run_id) REFERENCES ingestion_run(run_id)"
+    ],
+    [
+      "replay_event_current",
+      "replay_event_current_pkey",
+      "p",
+      "PRIMARY KEY (event_id)"
+    ],
+    [
+      "replay_event_version",
+      "replay_event_version_pkey",
+      "p",
+      "PRIMARY KEY (event_id, updated)"
+    ],
+    [
+      "source_response",
+      "source_response_pkey",
+      "p",
+      "PRIMARY KEY (response_id)"
+    ],
+    [
+      "source_response",
+      "source_response_run_id_fkey",
+      "f",
+      "FOREIGN KEY (run_id) REFERENCES ingestion_run(run_id)"
+    ]
+  ],
+  "limit": "El monitor guardó recuentos, no IDs de la respuesta API. La reconstrucción SQL usa ingested_at <= sampled_at y no demuestra el conjunto exacto que respondió la API unos instantes después."
+}

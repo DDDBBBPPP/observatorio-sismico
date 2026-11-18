@@ -1,5 +1,29 @@
 # Estado del proyecto
 
+## Auditoría de procedencia y modelo sin interrumpir el monitor — 18-11-2026
+
+- Rama `002-ingesta-usgs-persistencia`, punto inicial `d2195e399d08cbf5efcfa6fff2fffb4dc445f7a1`.
+  La muestra de **17:23:04 UTC** anotó última descarga de 191 features y
+  API live_24h=192. El [informe](AUDITORIA-PROCEDENCIA-1723.md) y su JSON
+  contrastan original con SHA-256, pares `(ID, updated)`, versiones/estado
+  PostgreSQL, API paginada y estadísticas en ventana UTC fija. Resultado:
+  188 terremotos en la fuente; reconstrucción SQL al corte 192 con cuatro
+  IDs de respuestas anteriores verificadas; la API original de las 17:23
+  guardó solo el recuento, no sus IDs. A las 20:12 UTC el conjunto fijo daba
+  199 en `event_current`, API y estadísticas, por siete llegadas posteriores.
+- [Modelo ampliado](MODELO-DATOS.md) con Mermaid, grano/PK/FK/índices y
+  revisión SQL. Dos índices reales cubren `(event_id, updated)`; el explícito
+  redundante en columnas ocupaba 1.269.760 bytes. No se cambió DDL ni índices.
+  El arranque del consumidor reejecuta el SQL de esquema; migraciones de una
+  sola aplicación y revisión de índices son propuestas **posteriores**.
+- Monitor PID **13216** comprobado activo. A las **20:08:04 UTC** había
+  **62 muestras**, última con cinco servicios sanos, sin errores de muestra
+  y lag Kafka 0. Esta observación no completa 24 horas. No se detuvieron ni
+  recrearon servicios, ni se hizo carga histórica. Próximo paso: continuar
+  la medición hasta después de 19-11 15:03:04 UTC y evaluar huecos, salud,
+  frescura y lag con `tools/evaluate_monitor.py`. T006 externo sigue abierto;
+  PR #1 en borrador, sin merge.
+
 ## Punto de reanudación: cierre documental y nueva medición — 18-11-2026
 
 - Rama `002-ingesta-usgs-persistencia`; base al empezar este cierre

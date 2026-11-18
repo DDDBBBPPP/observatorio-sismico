@@ -30,9 +30,12 @@ auditar qué recibió el sistema.»
 
 ## 1:40–2:30 · Calidad y modelo
 
-«La identidad de una versión es `(event_id, updated)`: repetirla no duplica
-el evento y una revisión más nueva puede actualizar su estado. Una versión
-antigua no lo hace retroceder. Los mensajes imposibles de procesar se
+«Conceptualmente separo ejecución, respuesta original, versiones, estado
+actual y rechazos. Lógicamente una versión es `(event_id, updated)`: repetirla
+no duplica el evento y una revisión nueva sustituye el estado sin perder la
+anterior. Físicamente PostgreSQL impone esa clave única e indexa tiempo y
+país; Natural Earth sigue siendo un GeoJSON externo. Una versión antigua no
+hace retroceder el estado. Los mensajes imposibles de procesar se
 registran en cuarentena con topic, partición y offset; una caída de base de
 datos conserva el mensaje para reintentarlo. Magnitud o profundidad nulas
 siguen siendo ND: no las convierto en cero. El país puede quedar sin asignar
