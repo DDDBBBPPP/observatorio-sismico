@@ -33,7 +33,7 @@ terremotos: `uw714140061` (`explosion`) y `ci41363095`/
 | `event_version`: filas / IDs reconstruidos hasta el corte | 545 / **192** | `ingested_at <= 17:23:04.112254 UTC` |
 | Estado reconstruido desde versiones al corte | **192 IDs** | No es una respuesta API guardada |
 | Monitor `live_24h` | **192** | Solo guardó recuento, no IDs |
-| `event_version`: filas / IDs a la auditoría | 592 / **199** | SQL a las 20:12 UTC |
+| `event_version`: filas / IDs a la auditoría | 594 / **199** | SQL a las 20:12 UTC |
 | `event_current` a la auditoría | **199 IDs** | Estado actual, no el de las 17:23 |
 | `/api/eventos` paginado | **100 + 99 = 199 IDs únicos** | GET a las 20:12 UTC |
 | `/api/estadisticas` y suma de países | **199 / 199** | Mismo filtro a las 20:12 UTC |
