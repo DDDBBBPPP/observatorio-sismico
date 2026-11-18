@@ -7,10 +7,11 @@
     <nav class="page-nav" aria-label="Secciones"><a href="#explorar">Filtros</a><a href="#mapa">Mapa</a><a href="#indicadores">Indicadores</a><a href="#eventos">Eventos</a></nav>
   </header>
 
-  <section class="status-panel" aria-live="polite">
+  <section class="status-panel" [class.status-error]="hasError()" aria-live="polite">
     <div class="status-main">
-      <div><span class="live-dot" aria-hidden="true"></span><strong>{{ mode() }}</strong><p>{{ status() }}</p></div>
+      <div><span class="live-dot" aria-hidden="true"></span><strong>{{ mode() }}</strong><p [attr.role]="hasError() ? 'alert' : null">{{ status() }}</p></div>
       @if (loading()) { <span class="loading" role="status">Actualizando…</span> }
+      @if (hasError() && !loading()) { <button type="button" class="secondary retry" (click)="retry()">Reintentar consulta</button> }
     </div>
     <p class="muted">{{ countriesStatus() }} · {{ count() }} puntos dibujados · {{ omitted() }} omitidos por coordenadas inválidas</p>
     <dl class="freshness"><div><dt>Última consulta del panel</dt><dd>{{ lastRead() }}</dd></div><div><dt>Respuesta generada</dt><dd>{{ generated() }}</dd></div>
@@ -44,8 +45,8 @@
         <button type="button" class="secondary" (click)="clearFilters()" [disabled]="loading()">Limpiar filtros</button>
       </div>
     </div>
-    <p class="applied"><strong>Filtros aplicados:</strong> {{ appliedLabel() }}</p>
-    <p class="field-help">«Sin país asignado» conserva eventos en el mar o fuera de la cobertura del mapa de fronteras. No significa que el terremoto sea inválido ni lo asigna al país más cercano.</p>
+    <div class="applied" aria-live="polite"><span class="applied-kicker">VISTA APLICADA</span><strong>{{ appliedLabel() }}</strong><span>Periodo exacto: {{ appliedPeriod() }}</span></div>
+    <div class="context-note"><p><strong>Sin país asignado</strong> conserva puntos marítimos o fuera de los polígonos: no significa dato inválido.</p><p><strong>Magnitudes pequeñas:</strong> la cobertura de redes sísmicas varía por región. Compara con magnitud ≥4 antes de interpretar el reparto por país.</p></div>
     @if (pending() && !loading()) { <p class="pending">Hay cambios sin aplicar; el mapa, gráficos y tabla siguen mostrando los filtros aplicados.</p> }
     @if (truncated()) { <p class="notice">El mapa muestra la primera página; los indicadores usan todos los registros filtrados.</p> }
   </section>
@@ -58,7 +59,8 @@
 
   <section id="mapa" class="map-section" aria-label="Mapa de terremotos">
     <div class="section-heading"><div><span class="section-kicker">02 / UBICACIÓN</span><h2>Mapa de eventos</h2></div><p>Selecciona un círculo para abrir su ficha. Usa el control del mapa para mostrar u ocultar las fronteras.</p></div>
-    <div class="map" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" aria-label="Mapa interactivo de terremotos"></div>
+    <div class="map-toolbar"><span>{{ count() }} puntos visibles · {{ applied().viewMode === 'replay' ? 'Reproducción' : 'Datos reales' }}</span><button type="button" class="secondary" (click)="fitMap()">Encuadrar resultados</button></div>
+    <div class="map" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" [attr.aria-busy]="loading()" aria-label="Mapa interactivo de terremotos"></div>
     <div class="legend"><span><i class="shallow"></i> &lt;70 km</span><span><i class="intermediate"></i> 70–&lt;300 km</span><span><i class="deep"></i> ≥300 km</span><span><i class="unknown"></i> Profundidad ND</span><span>Tamaño del círculo: magnitud; sin magnitud, tamaño mínimo.</span></div>
   </section>
 
@@ -74,8 +76,9 @@
         <p class="comparison"><strong>Comparación con magnitud ≥{{ comparison.min_mag }}:</strong> {{ comparison.current_window_events }} eventos en {{ comparison.window_days | number:'1.2-2' }} días consultados; media de 2025 para igual duración: {{ comparison.average_for_window | number:'1.2-2' }}. Base: {{ comparison.events }} eventos en 365 días, incluidos los días sin eventos.</p>
       }
       <div class="chart-grid">
-        <article class="chart-card"><h3>Países</h3><p>Principales países y «Sin país asignado»; el resto se agrupa.</p>
-          <ul class="bars">@for (bin of countryChart(summary.countries); track bin.label) { <li><span>{{ bin.label }}</span><div class="bar-track"><span class="bar" [style.width.%]="barWidth(bin.count, countryChart(summary.countries))"></span></div><strong>{{ bin.count }}</strong></li> }</ul>
+        <article class="chart-card"><h3>Países</h3><p>Recuento y porcentaje del total filtrado. «Otros» se puede desplegar.</p>
+          <ul class="bars country-bars">@for (bin of countryChart(summary.countries); track bin.code) { <li><span>{{ bin.label }}</span><div class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="barWidth(bin.count, countryChart(summary.countries))"></span></div><strong>{{ bin.count }} <small>({{ percent(bin.count, summary.count) | number:'1.1-1' }} %)</small></strong></li> }</ul>
+          @if (otherCountries(summary.countries).length) { <details class="other-details"><summary>Ver los {{ otherCountries(summary.countries).length }} países agrupados en «Otros»</summary><ul>@for (item of otherCountries(summary.countries); track item.country_id) { <li><span>{{ countryDisplay(item.country_id, item.country_name) }}</span><strong>{{ item.count }} · {{ percent(item.count, summary.count) | number:'1.1-1' }} %</strong></li> }</ul></details> }
         </article>
         <article class="chart-card"><h3>Actividad por hora</h3><p>Últimas ocho horas con eventos dentro del filtro; las horas vacías no aparecen. Hora de ocurrencia UTC.</p>
           <ul class="bars">@for (bin of hourlyChart(summary.hourly_utc); track bin.label) { <li><span>{{ bin.label }}</span><div class="bar-track"><span class="bar" [style.width.%]="barWidth(bin.count, hourlyChart(summary.hourly_utc))"></span></div><strong>{{ bin.count }}</strong></li> }</ul>
@@ -94,11 +97,12 @@
 
   <section id="eventos" class="table-section">
     <div class="section-heading"><div><span class="section-kicker">04 / DETALLE</span><h2>Eventos</h2></div><p>Primeros {{ tableEvents().length }} registros de la página, por fecha de ocurrencia. Máximo 100 filas visibles.</p></div>
-    <div class="table-scroll"><table>
+    <p class="mobile-table-hint">En pantallas pequeñas, desliza la tabla horizontalmente para ver todas las columnas.</p>
+    <div class="table-scroll"><table [attr.aria-busy]="loading()">
       <thead><tr><th scope="col">Fecha original UTC</th><th scope="col">Magnitud</th><th scope="col">Profundidad (km)</th><th scope="col">Lugar</th><th scope="col">País</th>@if (applied().viewMode === 'replay') { <th scope="col">Reproducido UTC</th> }<th scope="col">ID</th></tr></thead>
       <tbody>
         @for (feature of tableEvents(); track feature.id) {
-          <tr><td>{{ date(feature.properties.time) }}</td><td class="numeric">{{ feature.properties.mag ?? 'ND' }}</td><td class="numeric">{{ depth(feature) }}</td><td>{{ feature.properties.place ?? 'Sin descripción' }}</td><td>{{ feature.properties.country_name ?? 'Sin país asignado' }}</td>@if (applied().viewMode === 'replay') { <td>{{ replayDate(feature.properties.replay_at) }}</td> }<td class="event-id">{{ feature.id }}</td></tr>
+          <tr><td>{{ date(feature.properties.time) }}</td><td class="numeric">{{ feature.properties.mag ?? 'ND' }}</td><td class="numeric">{{ depth(feature) }}</td><td>{{ feature.properties.place ?? 'Sin descripción' }}</td><td>{{ countryDisplay(feature.properties.country_id, feature.properties.country_name) }}</td>@if (applied().viewMode === 'replay') { <td>{{ replayDate(feature.properties.replay_at) }}</td> }<td class="event-id">{{ feature.id }}</td></tr>
         } @empty { <tr><td [attr.colspan]="applied().viewMode === 'replay' ? 7 : 6">No hay eventos para los filtros aplicados.</td></tr> }
       </tbody>
     </table></div>

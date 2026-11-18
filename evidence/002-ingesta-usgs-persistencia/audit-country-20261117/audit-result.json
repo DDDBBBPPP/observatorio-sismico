@@ -1,0 +1,225 @@
+{
+  "source": {
+    "run_id": "run-9d7cb20ff1b545359c0f6b1399f873db",
+    "received_at": "2026-11-18T00:13:46.893570+00:00",
+    "metadata": {
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+      "requested_at": "2026-11-18T00:13:46.757171+00:00",
+      "received_at": "2026-11-18T00:13:46.893570+00:00",
+      "http_status": 200,
+      "duration_ms": 136,
+      "record_count": 238,
+      "attempts": 1
+    },
+    "source_response_path": "evidence\\002-ingesta-usgs-persistencia\\originals\\run-9d7cb20ff1b545359c0f6b1399f873db\\response.json",
+    "sha256": "4e9bbe900ae7922fd85576d3c34086f00a6c5b2cb1dae99fc5ccb176d58b3328"
+  },
+  "window_utc": {
+    "start": "2026-11-17T12:00:00+00:00",
+    "end": "2026-11-17T23:00:00+00:00"
+  },
+  "original": {
+    "features_total": 238,
+    "features_in_window": 114,
+    "unique_ids_in_window": 114,
+    "earthquakes_in_window": 112,
+    "unique_earthquake_ids": 112
+  },
+  "all": {
+    "original_unique_earthquake_ids": 112,
+    "api_total": 113,
+    "api_unique_ids": 113,
+    "stats_count": 113,
+    "db_unique_ids": 113,
+    "country_sum": 113,
+    "country_counts": {
+      "USA": 88,
+      "UNASSIGNED": 17,
+      "BOL": 1,
+      "IRN": 1,
+      "MEX": 1,
+      "PAN": 1,
+      "PER": 1,
+      "PNG": 1,
+      "RUS": 1,
+      "TJK": 1
+    },
+    "api_country_counts_match_stats": true,
+    "db_country_counts_match_stats": true,
+    "original_missing_in_api": [],
+    "api_not_in_snapshot": [
+      "aka2026wufrkl"
+    ],
+    "api_not_in_db": [],
+    "db_not_in_api": [],
+    "country_mismatched_ids": []
+  },
+  "mag_ge_4": {
+    "original_unique_earthquake_ids": 15,
+    "api_total": 15,
+    "api_unique_ids": 15,
+    "stats_count": 15,
+    "db_unique_ids": 15,
+    "country_sum": 15,
+    "country_counts": {
+      "UNASSIGNED": 7,
+      "BOL": 1,
+      "IRN": 1,
+      "MEX": 1,
+      "PAN": 1,
+      "PER": 1,
+      "PNG": 1,
+      "RUS": 1,
+      "TJK": 1
+    },
+    "api_country_counts_match_stats": true,
+    "db_country_counts_match_stats": true,
+    "original_missing_in_api": [],
+    "api_not_in_snapshot": [],
+    "api_not_in_db": [],
+    "db_not_in_api": [],
+    "country_mismatched_ids": []
+  },
+  "examples": [
+    {
+      "event_id": "aka2026wtzfxl",
+      "longitude": -151.396,
+      "latitude": 62.263,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wtzjve",
+      "longitude": -141.192,
+      "latitude": 60.494,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wucnfd",
+      "longitude": -148.546,
+      "latitude": 64.683,
+      "country_id": "USA",
+      "country_name": "United States of America",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": [
+        {
+          "code": "USA",
+          "name": "Estados Unidos"
+        }
+      ]
+    },
+    {
+      "event_id": "aka2026wuapjf",
+      "longitude": -147.48,
+      "latitude": 60.088,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wufrkl",
+      "longitude": -179.766,
+      "latitude": 50.873,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-48d6baab93f84e9c956eef9dc51cbf3f",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wuigrb",
+      "longitude": -151.988,
+      "latitude": 59.791,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-43b4945f41e24f23b1ecab1da342f7c7",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "aka2026wujrkc",
+      "longitude": -152.461,
+      "latitude": 60.119,
+      "country_id": null,
+      "country_name": null,
+      "status": "unassigned",
+      "reason": "no_catalog_match",
+      "source_response_id": "response-7a40add1b59d45e8b48657010525ef20",
+      "polygon_matches": []
+    },
+    {
+      "event_id": "us7000ty7j",
+      "longitude": -139.8841,
+      "latitude": 60.49,
+      "country_id": "CAN",
+      "country_name": "Canada",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "outside_audit_window": true,
+      "polygon_matches": [
+        {
+          "code": "CAN",
+          "name": "Canadá"
+        }
+      ]
+    },
+    {
+      "event_id": "us7000rlhy",
+      "longitude": -139.56,
+      "latitude": 60.4206,
+      "country_id": "CAN",
+      "country_name": "Canada",
+      "status": "assigned",
+      "reason": "point_covers_country",
+      "outside_audit_window": true,
+      "polygon_matches": [
+        {
+          "code": "CAN",
+          "name": "Canadá"
+        }
+      ]
+    }
+  ],
+  "usa_source_profile": {
+    "count_in_snapshot_window": 88,
+    "below_magnitude_4": 88,
+    "alaska_place_mentions": 20,
+    "networks": {
+      "ak": 19,
+      "av": 1,
+      "ci": 12,
+      "hv": 4,
+      "nc": 23,
+      "nn": 1,
+      "tx": 7,
+      "uu": 18,
+      "uw": 3
+    }
+  }
+}

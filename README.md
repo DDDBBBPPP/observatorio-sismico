@@ -52,9 +52,32 @@ Para detenerla antes de completar las 24 horas:
 Stop-Process -Id ([int](Get-Content evidence/002-ingesta-usgs-persistencia/monitor-24h.pid))
 ```
 
-El archivo de muestras no acredita 24 horas hasta que abarque el periodo
-completo. El build de `frontend` solo actualiza archivos locales: **Netlify
-requiere un nuevo despliegue** para mostrar los cambios Angular de esta rama.
+El monitor de esta revisión empezó el **18-11-2026 a las 00:13:39 UTC**
+(01:13:39 en Madrid), PID guardado en `monitor-24h.pid`. La primera muestra
+registró cinco servicios sanos, cero errores y lag Kafka 0. Evaluar mañana
+la cadencia, huecos mayores de 450 segundos, servicios no sanos, antigüedad
+de la consulta USGS mayor de diez minutos, errores y lag con:
+
+```powershell
+python tools/evaluate_monitor.py
+```
+
+`complete_24h` solo pasa a `true` cuando las muestras abarcan al menos 24
+horas. La auditoría reproducible por país usa la instantánea conservada en
+`evidence/002-ingesta-usgs-persistencia/audit-country-20261117/all_day.geojson`
+y la ventana fija `2026-11-17T12:00:00Z` a `23:00:00Z`:
+
+```powershell
+python tools/audit_countries.py
+python tools/run_checks.py --skip-kafka
+```
+
+La opción `--skip-kafka` deja al consumidor en marcha durante la medición de
+24 horas; la prueba Kafka con reinicio ya se ejecutó antes de iniciar el
+monitor. El panel publicado en
+`https://stellar-basbousa-cee41b.netlify.app/` corresponde al despliegue
+Netlify `6afcef8a47d80fa7d8a964ed` de esta revisión. **Un build local
+posterior no actualiza automáticamente esa web:** requiere otro despliegue.
 
 ## Instalación en Windows
 

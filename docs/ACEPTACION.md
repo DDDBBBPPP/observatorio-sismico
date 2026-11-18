@@ -1,5 +1,70 @@
 # Aceptación observada — 2026-11-15
 
+## Auditoría por país y publicación — 18-11-2026
+
+Se preservó el `all_day.geojson` de USGS recibido a las **00:13:46 UTC**,
+run `run-9d7cb20ff1b545359c0f6b1399f873db`, con SHA-256
+`4e9bbe900ae7922fd85576d3c34086f00a6c5b2cb1dae99fc5ccb176d58b3328`.
+La ventana fija fue **17-11-2026 12:00–23:00 UTC**, mundo, modo live, sin
+filtros adicionales. La instantánea, metadatos y resultado detallado están en
+`evidence/002-ingesta-usgs-persistencia/audit-country-20261117/`; ejecutar
+`python tools/audit_countries.py` para repetir la comparación sin descargar
+ni cargar el histórico.
+
+| Corte | Original: IDs de terremoto únicos | API eventos | API estadísticas | PostgreSQL | Suma de países |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Todas las magnitudes | 112 | 113 | 113 | 113 | 113 |
+| Magnitud ≥4 | 15 | 15 | 15 | 15 | 15 |
+
+El original tenía 238 Features en total; 114 y 114 IDs únicos caían en la
+ventana, pero dos no eran `type=earthquake`. Ninguno de los 112 terremotos
+faltaba en API. El ID adicional `aka2026wufrkl` estaba persistido desde una
+respuesta anterior y no figuraba en esta instantánea; el sistema conserva el
+estado de eventos observados, mientras que el feed `all_day` es una foto
+cambiante. Ese evento tenía `country_id=NULL` y coordenadas
+`(-179.766, 50.873)` sin polígono coincidente. En ≥4 no hubo diferencia de
+IDs. Los recuentos por país de `/api/eventos`, `/api/estadisticas` y la BD
+coincidieron en ambos cortes.
+
+En todas las magnitudes, **USA 88/113 (77,9 %)**, «Sin país asignado» 17/113
+(15,0 %) y otros ocho países 1 cada uno. En ≥4, **USA 0/15**, sin país 7/15
+(46,7 %) y otros ocho países 1 cada uno. Los 88 eventos USA del original en
+esta ventana eran menores de 4; 20 lugares contenían «Alaska» y aparecían
+nueve códigos de red USGS. Tres ejemplos USA, incluidos
+`aka2026wtzfxl (-151.396, 62.263)`, intersectaban únicamente el polígono
+`USA`. Cuatro puntos sin país, incluido `aka2026wuapjf (-147.48, 60.088)`,
+no intersectaban ningún polígono. En esta ventana no hubo Canadá; se
+verificaron **fuera de ella** dos ejemplos históricos, entre ellos
+`us7000ty7j (-139.8841, 60.49)`, dentro del polígono `CAN`.
+
+La muestra explica que el gran peso de USA en el gráfico procede aquí de
+eventos pequeños del feed. La [explicación oficial de USGS sobre Latest
+Earthquakes](https://www.usgs.gov/faqs/why-earthquake-was-reportedrecorded-network-x-or-i-felt-not-latest-earthquakes-maplist)
+advierte que los eventos pequeños fuera de EE. UU. tienen cobertura desigual
+y pueden no aparecer. Esta ventana no permite inferir tasas sísmicas reales,
+riesgo ni causalidad exclusiva; el catálogo de polígonos también simplifica
+costas y deja puntos marítimos sin país.
+
+El panel nuevo se compiló localmente en 2,807 s (límite 120 s) y se publicó
+en el proyecto Netlify existente: despliegue
+`6afcef8a47d80fa7d8a964ed`, URL
+`https://stellar-basbousa-cee41b.netlify.app/`. El HTML público contiene el
+bundle `main-IXMESWZ4.js`; `config.json` mantiene el túnel esperado. La API
+por ngrok respondió HTTP 200 en salud, eventos y estadísticas, y los dos
+preflights CORS devolvieron el origen público. La prueba de componente
+confirmó que mapa, gráfico y tabla cambian juntos al aplicar el país.
+`python tools/verify_public.py` comprobó después los cuatro assets enlazados
+por la portada (CSS y JS), salud/eventos/estadísticas por ngrok y los dos
+preflights, todos con HTTP 200.
+El navegador integrado devolvió `[]`: **no hay capturas nuevas ni inspección
+visual real de escritorio/móvil**.
+
+El monitor se inició en segundo plano el 18-11 a las **00:13:39 UTC** con PID
+20256. Sus dos primeras muestras estaban separadas por cinco minutos, sin
+huecos, servicios no sanos ni errores; antigüedad máxima de consulta 55,3 s
+y lag máximo 0. La evaluación `tools/evaluate_monitor.py` indicó
+`complete_24h=false`; la prueba de 24 horas sigue pendiente.
+
 ## Revisión local de la rama 002 (18-11-2026, Europe/Madrid)
 
 Se verificó primero que Docker tenía los cinco servicios `running/healthy` y

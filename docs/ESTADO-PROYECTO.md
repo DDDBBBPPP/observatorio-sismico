@@ -1,5 +1,26 @@
 # Estado del proyecto
 
+## Auditoría y publicación del panel — 18-11-2026
+
+- Instantánea USGS `all_day.geojson` de las 00:13:46 UTC preservada con
+  SHA-256; ventana fija del 17-11 12:00–23:00 UTC. Original 112 IDs de
+  terremoto, API/estadísticas/BD 113 (uno persistido de respuesta anterior),
+  suma de países 113. Con magnitud ≥4, todos coinciden en 15.
+- USA 88/113 sin filtro y 0/15 con magnitud ≥4; «Sin país asignado» 17/113
+  y 7/15, respectivamente. Muestras de coordenadas verificadas contra
+  polígonos; Canadá se comprobó con ejemplos históricos fuera de la ventana.
+  La desigualdad de cobertura de magnitudes pequeñas limita la lectura del
+  gráfico.
+- Frontend con nombres españoles y códigos en gráfico/tabla/mapa, porcentajes
+  por país, desglose de «Otros», periodo aplicado visible, estados de error
+  y aclaraciones de cobertura. Build y pruebas acotadas pasan.
+- **Nuevo despliegue Netlify realizado**: `6afcef8a47d80fa7d8a964ed`;
+  URL pública, bundle, API por ngrok y CORS comprobados. Navegador integrado
+  no disponible (`[]`), sin capturas ni inspección visual escritorio/móvil.
+- Monitor de 24 horas en segundo plano desde las 00:13:39 UTC, PID 20256.
+  Primeras dos muestras sanas y sin huecos, errores o lag; evaluación completa
+  **pendiente** hasta transcurridas 24 horas reales.
+
 ## Revisión de PR #1 — 18-11-2026
 
 - Rama `002-ingesta-usgs-persistencia`. Cinco servicios sanos y ngrok activo

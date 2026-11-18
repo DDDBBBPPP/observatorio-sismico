@@ -20,13 +20,14 @@ function signal(initial) {
   read.set = value => { current = value; };
   return read;
 }
+let markerCalls = 0;
 const leaflet = {
   latLng: (lat, lon) => ({ lat, lon }),
   latLngBounds: () => ({ pad() { return this; } }),
   layerGroup: () => ({ addTo() { return this; }, clearLayers() {}, addLayer() {} }),
   tileLayer: () => ({ addTo() {} }),
   geoJSON: () => ({ addTo() { return this; }, addData() {} }),
-  circleMarker: () => ({ bindPopup() { return this; }, addTo() {} }),
+  circleMarker: () => { markerCalls++; return { bindPopup() { return this; }, addTo() {} }; },
   control: { layers: () => ({ addTo() {} }) }
 };
 const filters = loadTypeScript('../src/app/filter-query.ts', () => { throw Error('Unexpected import'); });
@@ -42,7 +43,8 @@ const { AppComponent } = loadTypeScript('../src/app/app.component.ts', name => {
 globalThis.document = { createElement: () => ({ textContent: '' }) };
 const catalog = { type: 'FeatureCollection', features: [
   { properties: { ADM0_A3: 'USA', NAME_ES: 'Estados Unidos' } },
-  { properties: { ADM0_A3: 'ESP', NAME_ES: 'España' } }
+  { properties: { ADM0_A3: 'ESP', NAME_ES: 'España' } },
+  { properties: { ADM0_A3: 'CAN', NAME_ES: 'Canadá' } }
 ] };
 const feature = (id, country_id, mag, replay_at = null) => ({
   type: 'Feature', id, geometry: { type: 'Point', coordinates: [-3, 40, 10] },
@@ -73,8 +75,9 @@ globalThis.fetch = async url => {
     metadata: { mode, total: selected.length, generated: Date.now(),
       last_source_fetch: Date.now() - 20 * 60 * 1000, filters: { country_id: country, min_mag: minMag ? Number(minMag) : null } }
   } : {
-    count: selected.length, filters: { country_id: country, min_mag: minMag ? Number(minMag) : null },
-    hourly_utc: [], countries: [], distributions: {
+    count: selected.length, period: { start: '2026-11-17T00:00:00+00:00', end: '2026-11-18T00:00:00+00:00' },
+    filters: { country_id: country, min_mag: minMag ? Number(minMag) : null },
+    hourly_utc: [], countries: selected.map(item => ({ country_id: item.properties.country_id, country_name: item.properties.country_name, count: 1 })), distributions: {
       magnitude: { bins: [], null_count: 0 }, depth_km: { bins: [], null_count: 0 }
     }
   };
@@ -96,6 +99,15 @@ async function settle() {
 try {
   await app.onMapReady(map);
   assert.equal(app.count(), 2);
+  assert.equal(markerCalls, 2);
+  assert.equal(app.countryDisplay('CAN', 'Canada'), 'Canadá (CAN)');
+  assert.equal(app.countryChart(app.stats().countries)[0].label, 'Estados Unidos (USA)');
+  assert.equal(app.percent(1, app.stats().count), 50);
+  assert.deepEqual(app.otherCountries([
+    ...Array.from({ length: 7 }, (_, i) => ({ country_id: `X${i}`, country_name: `Country ${i}`, count: 8 - i })),
+    { country_id: 'UNASSIGNED', country_name: 'Sin país asignado', count: 1 }
+  ]).map(item => item.country_id), ['X6']);
+  assert.match(app.appliedPeriod(), /2026-11-17 00:00/);
   assert.match(app.apiStale(), /consulta USGS correcta/);
   assert.equal(app.countryOptions().find(item => item.code === 'USA').name, 'Estados Unidos');
   const initialRequests = requests.length;
@@ -107,8 +119,10 @@ try {
   assert.equal(app.loading(), true);
   await settle();
   assert.equal(app.count(), 1);
+  assert.equal(markerCalls, 3, 'The map must redraw for the selected filter');
   assert.equal(app.tableEvents()[0].properties.country_id, 'USA');
   assert.equal(app.stats().count, 1);
+  assert.equal(app.countryChart(app.stats().countries)[0].count, 1);
   assert.equal(app.pending(), false);
   assert.match(app.appliedLabel(), /Estados Unidos \(USA\)/);
   assert.ok(recenterCount > 0, 'Applying a country must frame its result');

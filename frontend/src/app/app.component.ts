@@ -10,7 +10,9 @@ type Events = FeatureCollection<Point, Properties> & { metadata?: { generated?: 
 type Config = { mode: 'demo' | 'api'; apiUrl: string; refreshMs: number; skipNgrokWarning: boolean };
 type Bin = { label: string; count: number };
 type Country = { code: string; name: string };
-type Statistics = { count: number; filters: { min_mag: number | null; country_id: string | null }; hourly_utc: { hour_utc: string; count: number }[]; countries: { country_id: string; country_name: string; count: number }[]; distributions: { magnitude: { bins: Bin[]; null_count: number }; depth_km: { bins: Bin[]; null_count: number } }; historical_comparison?: { average_for_window: number; current_window_events: number; min_mag: number; window_days: number; events: number } };
+type CountryStat = { country_id: string; country_name: string; count: number };
+type CountryBin = Bin & { code: string };
+type Statistics = { count: number; period: { start: string; end: string }; filters: { min_mag: number | null; country_id: string | null }; hourly_utc: { hour_utc: string; count: number }[]; countries: CountryStat[]; distributions: { magnitude: { bins: Bin[]; null_count: number }; depth_km: { bins: Bin[]; null_count: number } }; historical_comparison?: { average_for_window: number; current_window_events: number; min_mag: number; window_days: number; events: number } };
 
 @Component({
   selector: 'app-root', standalone: true, imports: [CommonModule, LeafletDirective],
@@ -20,6 +22,7 @@ export class AppComponent implements OnDestroy {
   readonly mode = signal('Cargando configuración');
   readonly status = signal('Preparando el mapa…');
   readonly loading = signal(false);
+  readonly hasError = signal(false);
   readonly lastRead = signal('Sin lectura');
   readonly generated = signal('Sin información');
   readonly lastIngestion = signal('Sin información');
@@ -30,6 +33,7 @@ export class AppComponent implements OnDestroy {
   readonly countryOptions = signal<Country[]>([]);
   readonly apiStale = signal('');
   readonly stats = signal<Statistics | null>(null);
+  readonly appliedPeriod = signal('Esperando respuesta de la API');
   readonly start = signal('');
   readonly end = signal('');
   readonly minMag = signal('');
@@ -48,6 +52,7 @@ export class AppComponent implements OnDestroy {
   readonly options: L.MapOptions = { center: L.latLng(18, 0), zoom: 2, minZoom: 2, maxZoom: 8, preferCanvas: true, worldCopyJump: false };
   private map?: L.Map;
   private events = L.layerGroup();
+  private positions: L.LatLng[] = [];
   private timer?: ReturnType<typeof setTimeout>;
   private controller = new AbortController();
   private destroyed = false;
@@ -130,12 +135,13 @@ export class AppComponent implements OnDestroy {
         const depthOk = typeof depth === 'number' && Number.isFinite(depth);
         const color = !depthOk ? '#64748b' : depth < 70 ? '#e8a317' : depth < 300 ? '#e35b37' : '#7b3fb6';
         const popup = document.createElement('div');
-        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${magnitude ?? 'ND'}\nProfundidad: ${depthOk ? depth + ' km' : 'ND'}\nFecha original UTC: ${this.date(p.time)}\n${selected.viewMode === 'replay' ? `Reproducido UTC: ${this.replayDate(p.replay_at)}\n` : ''}País: ${p.country_name ?? 'Sin país asignado'}\nID: ${feature.id ?? 'ND'}`;
+        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${magnitude ?? 'ND'}\nProfundidad: ${depthOk ? depth + ' km' : 'ND'}\nFecha original UTC: ${this.date(p.time)}\n${selected.viewMode === 'replay' ? `Reproducido UTC: ${this.replayDate(p.replay_at)}\n` : ''}País: ${this.countryDisplay(p.country_id, p.country_name)}\nID: ${feature.id ?? 'ND'}`;
         const point = L.latLng(lat, lon);
         positions.push(point);
         L.circleMarker(point, { radius: magnitude === null ? 4 : Math.max(3, Math.min(18, 3 + (magnitude + 1) * 2)), color, fillColor: color, fillOpacity: .75, weight: 1 }).bindPopup(popup).addTo(next);
       }
       this.events.clearLayers(); this.events.addLayer(next);
+      this.positions = positions;
       if (recenter && this.map) {
         if (selected.viewMode === 'live' && !selected.country && !selected.start && !selected.end && !selected.minMag) this.map.setView(this.options.center!, this.options.zoom!);
         else if (positions.length === 1) this.map.setView(positions[0], 5);
@@ -154,9 +160,14 @@ export class AppComponent implements OnDestroy {
         ? 'Aviso: la última consulta USGS correcta supera 10 minutos.' : '');
       this.stats.set(summary);
       this.applied.set({ ...selected });
+      this.appliedPeriod.set(summary?.period ? `${summary.period.start.replace('T', ' ').slice(0, 16)} → ${summary.period.end.replace('T', ' ').slice(0, 16)} UTC` : this.appliedLabel());
+      this.hasError.set(false);
       this.status.set(config.mode === 'demo' ? 'Ejemplo estático: no representa actividad real' : selected.viewMode === 'replay' ? 'REPRODUCCIÓN · consulta completada' : 'API accesible · consulta completada');
     } catch (error) {
-      if (!this.destroyed && requestId === this.requestId) this.status.set(`No se pudo actualizar: se conserva la última lectura. ${error instanceof Error ? error.message : 'Revisa API, túnel y CORS.'}`);
+      if (!this.destroyed && requestId === this.requestId) {
+        this.hasError.set(true);
+        this.status.set(`No se pudo actualizar: se conserva la última lectura. ${error instanceof Error ? error.message : 'Revisa API, túnel y CORS.'}`);
+      }
     } finally {
       if (!this.destroyed && requestId === this.requestId) {
         this.loading.set(false);
@@ -168,6 +179,13 @@ export class AppComponent implements OnDestroy {
     this[name].set((event.target as HTMLInputElement).value);
   }
   applyFilters(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.draft(), true); }
+  retry(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.applied()); }
+  fitMap(): void {
+    if (!this.map) return;
+    if (this.positions.length === 1) this.map.setView(this.positions[0], 5);
+    else if (this.positions.length > 1) this.map.fitBounds(L.latLngBounds(this.positions).pad(0.12), { maxZoom: 6 });
+    else this.map.setView(this.options.center!, this.options.zoom!);
+  }
   clearFilters(): void {
     const empty = emptyFilters(this.viewMode());
     this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(''); this.country.set('');
@@ -182,12 +200,24 @@ export class AppComponent implements OnDestroy {
   barWidth(count: number, values: { count: number }[]): number {
     return Math.max(2, Math.round(100 * count / Math.max(1, ...values.map(value => value.count))));
   }
-  countryChart(countries: Statistics['countries']): Bin[] {
+  countryName(code: string | null | undefined, fallback?: string | null): string {
+    if (!code || code === 'UNASSIGNED') return 'Sin país asignado';
+    return this.countryOptions().find(item => item.code === code)?.name || fallback || code;
+  }
+  countryDisplay(code: string | null | undefined, fallback?: string | null): string {
+    return code && code !== 'UNASSIGNED' ? `${this.countryName(code, fallback)} (${code})` : 'Sin país asignado';
+  }
+  percent(count: number, total: number): number { return total > 0 ? 100 * count / total : 0; }
+  countryChart(countries: Statistics['countries']): CountryBin[] {
     const selected = countries.slice(0, 6);
     const unassigned = countries.find(item => item.country_id === 'UNASSIGNED');
     if (unassigned && !selected.includes(unassigned)) selected.push(unassigned);
     const other = countries.filter(item => !selected.includes(item)).reduce((sum, item) => sum + item.count, 0);
-    return [...selected.map(item => ({ label: item.country_name, count: item.count })), ...(other ? [{ label: 'Otros países', count: other }] : [])];
+    return [...selected.map(item => ({ label: this.countryDisplay(item.country_id, item.country_name), code: item.country_id, count: item.count })), ...(other ? [{ label: 'Otros países', code: 'OTHER', count: other }] : [])];
+  }
+  otherCountries(countries: Statistics['countries']): CountryStat[] {
+    const shown = new Set(this.countryChart(countries).map(item => item.code));
+    return countries.filter(item => !shown.has(item.country_id));
   }
   hourlyChart(hours: Statistics['hourly_utc']): Bin[] {
     return hours.slice(-8).map(item => ({ label: `${item.hour_utc.slice(0, 16).replace('T', ' ')} UTC`, count: item.count }));

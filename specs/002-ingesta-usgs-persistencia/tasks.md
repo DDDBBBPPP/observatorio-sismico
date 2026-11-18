@@ -274,8 +274,19 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
   salud, errores, recuentos y retraso sin declarar éxito antes de tiempo.
 - [ ] T062 Capturar y revisar visualmente el antes/después en navegador; el
   navegador integrado no estuvo disponible en esta sesión.
-- [ ] T063 Si se publica el nuevo frontend, desplegar Netlify y comprobar la
-  web pública. El build local no equivale a ese despliegue.
+- [x] T063 Publicar el nuevo frontend en el proyecto Netlify existente
+  (`6afcef8a47d80fa7d8a964ed`) y comprobar bundle público, configuración,
+  API por ngrok y CORS. Un build local posterior sigue requiriendo despliegue.
+- [x] T064 Conservar una instantánea `all_day.geojson` con SHA-256 y auditar
+  una ventana UTC fija frente a eventos, estadísticas y BD, con y sin magnitud
+  ≥4; verificar muestras USA, CAN y marítimas mediante polígonos.
+- [x] T065 Mostrar nombres españoles y códigos `ADM0_A3` en gráfico, mapa y
+  tabla, porcentaje por país y desglose de «Otros»; probar cambio conjunto
+  de mapa, gráficos y tabla al aplicar filtros.
+- [x] T066 Iniciar el monitor 24 h en segundo plano y verificar su primera
+  muestra; incorporar evaluador de huecos, salud, frescura y lag.
+- [ ] T067 Revisar visualmente el despliegue en escritorio y móvil, con
+  capturas de esta versión; el navegador integrado no estuvo disponible.
 
 ## Dependencies & Execution Order
 
