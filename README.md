@@ -8,6 +8,11 @@ para explorar magnitud, profundidad, lugar y periodo. La comparación con 2025
 sirve para describir registros con filtros equivalentes; los recuentos por país
 no son una medida de riesgo sísmico ni de cobertura mundial uniforme.
 
+## Vídeos
+
+- [Explicación del proyecto](https://drive.google.com/file/d/1BxeGnGW96TmwLlfYy6Q2xF9xcdUc-sXO/view?usp=drive_link)
+- [Demostración del observatorio](https://drive.google.com/file/d/1luSHvvdCsMak4LxWyrsa_XtR1_vEmL3Q/view?usp=drive_link)
+
 ## Recorrido de los datos
 
 ```text
