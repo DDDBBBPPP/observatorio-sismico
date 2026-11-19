@@ -1,0 +1,15 @@
+{
+  "run_id": "run-9d7cb20ff1b545359c0f6b1399f873db",
+  "received_at": "2026-11-18T00:13:46.893570+00:00",
+  "metadata": {
+    "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+    "requested_at": "2026-11-18T00:13:46.757171+00:00",
+    "received_at": "2026-11-18T00:13:46.893570+00:00",
+    "http_status": 200,
+    "duration_ms": 136,
+    "record_count": 238,
+    "attempts": 1
+  },
+  "source_response_path": "evidence\\002-ingesta-usgs-persistencia\\originals\\run-9d7cb20ff1b545359c0f6b1399f873db\\response.json",
+  "sha256": "4e9bbe900ae7922fd85576d3c34086f00a6c5b2cb1dae99fc5ccb176d58b3328"
+}

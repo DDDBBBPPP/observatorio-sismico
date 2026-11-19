@@ -5,7 +5,7 @@
 **Decisión**: usar un único `compose.yaml` con productor, Kafka, consumidor,
 PostgreSQL y API FastAPI como cinco servicios separados.
 
-**Motivo**: `ENUNCIADO.md`, `README.md` y las FAQ exigen que esos cinco servicios
+**Motivo**: [el enunciado](../../docs/material-profesor/ENUNCIADO.md), [el README](../../README.md) y [las FAQ](../../docs/material-profesor/FAQ-ALUMNADO.md) exigen que esos cinco servicios
 se ejecuten juntos con `docker compose up --build -d`. Compose coordina
 contenedores; no se cuenta como una sexta imagen.
 

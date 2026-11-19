@@ -1,6 +1,131 @@
+<a class="skip-link" href="#explorar">Saltar a los filtros</a>
 <main>
-  <header><p class="eyebrow">BIG DATA · PROYECTO DE AULA</p><h1>Observatorio de actividad sísmica</h1><p>Mapa base, fronteras y eventos en capas independientes.</p></header>
-  <section class="info" aria-live="polite"><strong>{{ mode() }}</strong><p>{{ status() }}</p><p>{{ countriesStatus() }} · {{ count() }} eventos dibujados · {{ omitted() }} omitidos por coordenadas inválidas</p><small>Última lectura UTC: {{ lastRead() }}<br>Generación de la respuesta UTC: {{ generated() }}</small></section>
-  <div class="map" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" aria-label="Mapa interactivo de terremotos"></div>
-  <footer><strong>Profundidad</strong><span>🟡 Menos de 70 km</span><span>🟠 70–299,99 km</span><span>🟣 300 km o más</span><span>⚪ No disponible</span><p>Tamaño: escala visual creciente con la magnitud; no representa energía ni área afectada. Sin magnitud: radio mínimo. El mapa base puede desactivarse en el selector de capas.</p><p>Base proporcionada: añade filtros, gráficos, tabla accesible y conclusiones para completar el proyecto.</p></footer>
+  <header class="masthead">
+    <div class="masthead-row"><div class="brand"><span class="brand-mark" aria-hidden="true">◎</span><span>OBSERVATORIO SÍSMICO <small>USGS · NATURAL EARTH</small></span></div>
+      <nav class="page-nav" aria-label="Secciones"><a href="#explorar">Filtros</a><a href="#mapa">Mapa</a><a href="#eventos">Tabla</a></nav></div>
+    <div class="hero-copy"><h1>Terremotos registrados por USGS</h1><p>Explora datos observados, su ubicación y una comparación histórica. Los recuentos dependen de la cobertura de las redes.</p></div>
+  </header>
+
+  <section class="status-panel" [class.status-error]="hasError()" aria-live="polite">
+    <div class="overview-head">
+      <div><span class="section-kicker">PERIODO APLICADO · UTC</span><strong>{{ appliedPeriod() }}</strong><p>{{ appliedLabel() }}</p></div>
+      @if (applied().viewMode === 'live') { <div class="fetch-stamp"><span>Última consulta USGS correcta</span><strong>{{ lastIngestion() }}</strong></div> }
+      @else { <div class="fetch-stamp"><span>Modo de datos</span><strong>Replay histórico · no es actividad reciente</strong></div> }
+    </div>
+    <div class="quick-views" role="group" aria-label="Vistas rápidas de datos reales">
+      <button type="button" [class.selected]="activeQuickView() === 'comparison'" [attr.aria-pressed]="activeQuickView() === 'comparison'" (click)="selectQuickView('comparison')" [disabled]="loading()"><strong>Comparación mundial · magnitud ≥4</strong><span>Vista inicial, más comparable entre regiones</span></button>
+      <button type="button" [class.selected]="activeQuickView() === 'all'" [attr.aria-pressed]="activeQuickView() === 'all'" (click)="selectQuickView('all')" [disabled]="loading()"><strong>Todos los registros comunicados por USGS</strong><span>Incluye terremotos pequeños; cobertura desigual</span></button>
+    </div>
+    @if (stats(); as summary) { <div class="overview-metrics"><div><span>Terremotos del filtro</span><strong>{{ summary.count }}</strong></div><div><span>Países con eventos</span><strong>{{ assignedCountryCount(summary.countries) }}</strong></div><div><span>Sin país asignado</span><strong>{{ unassignedCount(summary.countries) }}</strong></div><div><span>Terremoto más reciente</span><strong class="metric-date">{{ latestEvent() }}</strong></div></div> }
+    <div class="status-main"><p><span class="live-dot" aria-hidden="true"></span><strong>{{ mode() }}</strong> · <span [attr.role]="hasError() ? 'alert' : null">{{ status() }}</span></p>
+      @if (loading()) { <span class="loading" role="status">Actualizando…</span> }
+      @if (hasError() && !loading()) { <button type="button" class="secondary retry" (click)="retry()">Reintentar consulta</button> }
+    </div>
+    <section class="trace-panel" aria-label="Trazabilidad de la ingesta real">
+      <div class="trace-heading"><strong>Trazabilidad live</strong><span>Acumulado desde PostgreSQL · independiente del filtro y del replay</span></div>
+      <dl class="trace-grid">
+        <div><dt>Última consulta USGS correcta</dt><dd>{{ lastIngestion() }}</dd></div>
+        <div><dt>Último evento nuevo persistido</dt><dd>{{ traceDate(trace()?.last_new_event_persisted_at) }}</dd></div>
+        <div><dt>Última persistencia live</dt><dd>{{ traceDate(trace()?.last_persisted_at) }}</dd></div>
+        <div><dt>Revisiones conservadas</dt><dd>{{ trace()?.revisions_stored ?? 'no medido' }}</dd></div>
+        <div><dt>Duplicados descartados</dt><dd>{{ trace()?.duplicates_discarded ?? 'no medido' }}</dd></div>
+        <div><dt>Cuarentena live</dt><dd>{{ trace()?.quarantined ?? 'no medido' }}</dd></div>
+        <div><dt>Lag del consumidor</dt><dd>{{ trace()?.consumer_lag_messages ?? 'no medido' }}</dd></div>
+      </dl>
+    </section>
+    <details class="timing-details"><summary>Detalles de actualización</summary><p>Consulta del panel: {{ lastRead() }} · Respuesta generada: {{ generated() }} · {{ countriesStatus() }} · {{ omitted() }} puntos omitidos por coordenadas inválidas.</p></details>
+    @if (apiStale()) { <p class="notice">{{ apiStale() }}</p> }
+  </section>
+
+  <section id="explorar" class="filter-panel" aria-label="Filtros de consulta">
+    <div class="section-heading"><div><span class="section-kicker">FILTROS AVANZADOS</span><h2>Ajusta la consulta</h2></div><p>País, periodo y magnitud se aplican juntos al mapa, gráficos y tabla.</p></div>
+    <div class="filter-grid">
+      <label>Vista
+        <select [value]="viewMode()" (change)="setViewMode($event)">
+          <option value="live">Datos reales (incluye histórico)</option>
+          <option value="replay">REPRODUCCIÓN · demostración</option>
+        </select>
+      </label>
+      <label>{{ viewMode() === 'replay' ? 'Desde fecha original (UTC)' : 'Desde (UTC)' }}<input type="datetime-local" [value]="start()" (input)="applyFilter('start', $event)"></label>
+      <label>{{ viewMode() === 'replay' ? 'Hasta fecha original (UTC)' : 'Hasta (UTC)' }}<input type="datetime-local" [value]="end()" (input)="applyFilter('end', $event)"></label>
+      <label>Magnitud mínima<input type="number" step="0.1" min="-10" max="20" [value]="minMag()" (input)="applyFilter('minMag', $event)" placeholder="Todas"></label>
+      <label>Profundidad mínima (km)<input type="number" step="any" [value]="minDepthKm()" (input)="applyFilter('minDepthKm', $event)" placeholder="Sin mínimo"></label>
+      <label>Profundidad máxima (km)<input type="number" step="any" [value]="maxDepthKm()" (input)="applyFilter('maxDepthKm', $event)" placeholder="Sin máximo"></label>
+      <label>País
+        <select [value]="country()" (change)="applyFilter('country', $event)">
+          <option value="">Todos los países</option>
+          <option value="UNASSIGNED">Sin país asignado</option>
+          @for (item of countryOptions(); track item.code) { <option [value]="item.code">{{ item.name }} ({{ item.code }})</option> }
+        </select>
+      </label>
+      <div class="filter-actions">
+        <button type="button" (click)="applyFilters()" [disabled]="loading()">Aplicar filtros</button>
+        <button type="button" class="secondary" (click)="clearFilters()" [disabled]="loading()">Restablecer filtros</button>
+      </div>
+    </div>
+    <div class="applied" aria-live="polite"><span class="applied-kicker">VISTA APLICADA</span><strong>{{ appliedLabel() }}</strong><span>Periodo exacto: {{ appliedPeriod() }}</span></div>
+    <div class="context-note"><p><strong>Sin país asignado</strong> incluye el mar y puntos fuera de los polígonos: no significa dato inválido.</p><p><strong>Cobertura desigual:</strong> los recuentos por país reflejan qué registran y comunican las redes, sobre todo para magnitudes pequeñas. No indican riesgo sísmico.</p></div>
+    @if (pending() && !loading()) { <p class="pending">Hay cambios sin aplicar; el mapa, gráficos y tabla siguen mostrando los filtros aplicados.</p> }
+    @if (truncated()) { <p class="notice">El mapa muestra la primera página; los indicadores usan todos los registros filtrados.</p> }
+  </section>
+
+  @if (applied().viewMode === 'replay') {
+    <aside class="replay-note"><strong>REPRODUCCIÓN · terremotos reales antiguos</strong>
+      <p>Son terremotos reales del histórico, reenviados por Kafka para demostrar el sistema. Se guardan separados de la ingesta normal y no son actividad actual. «Desde» y «Hasta» filtran la <strong>fecha original del terremoto</strong>; la fecha de reenvío (UTC) indica cuándo se reprodujo y aparece en la ficha y la tabla.</p>
+    </aside>
+  }
+
+  <section id="mapa" class="map-section" aria-label="Mapa de terremotos">
+    <div class="section-heading"><div><span class="section-kicker">02 / UBICACIÓN</span><h2>Mapa de eventos</h2></div><p>Selecciona un círculo para abrir su ficha. Usa el control del mapa para mostrar u ocultar las fronteras.</p></div>
+    <div class="map-toolbar"><span>{{ stats()?.count ?? count() }} eventos · {{ count() }} puntos visibles · {{ applied().viewMode === 'replay' ? 'Reproducción' : 'Datos reales' }}@if (applied().country && applied().country !== 'UNASSIGNED') { · Polígono {{ countryDisplay(applied().country) }} resaltado }</span><button type="button" class="secondary" (click)="fitMap()">Encuadrar resultados</button></div>
+    <div class="map" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" [attr.aria-busy]="loading()" aria-label="Mapa interactivo de terremotos"></div>
+    <div class="legend"><span><i class="shallow"></i> &lt;70 km</span><span><i class="intermediate"></i> 70–&lt;300 km</span><span><i class="deep"></i> ≥300 km</span><span><i class="unknown"></i> Profundidad ND</span><span>Tamaño del círculo: magnitud; sin magnitud, tamaño mínimo.</span></div>
+  </section>
+
+  <section id="indicadores" class="analysis" aria-live="polite">
+    <div class="section-heading"><div><span class="section-kicker">03 / ANÁLISIS</span><h2>Indicadores y distribuciones</h2></div><p>Recuentos del conjunto filtrado completo. ND significa dato no disponible.</p></div>
+    @if (stats(); as summary) {
+      <div class="metrics">
+        <div><span>Eventos</span><strong>{{ summary.count }}</strong></div>
+        <div><span>Magnitud ND</span><strong>{{ summary.distributions.magnitude.null_count }}</strong></div>
+        <div><span>Profundidad ND</span><strong>{{ summary.distributions.depth_km.null_count }}</strong></div>
+      </div>
+      @if (applied().viewMode === 'live' && isRecentPeriod(summary.period.end)) {
+        @if (summary.historical_comparison; as comparison) {
+          <p class="comparison"><strong>Comparación con magnitud ≥{{ comparison.min_mag }}:</strong> {{ comparison.current_window_events }} eventos en {{ comparison.window_days | number:'1.2-2' }} días consultados; media de 2025 para igual duración: {{ comparison.average_for_window | number:'1.2-2' }}. Base: {{ comparison.events }} eventos en 365 días, incluidos los días sin eventos.</p>
+        }
+      }
+      <div class="chart-grid">
+        <article class="chart-card"><h3>Países</h3><p>Recuento y porcentaje del total filtrado. «Otros» se puede desplegar.</p>
+          <ul class="bars country-bars">@for (bin of countryChart(summary.countries); track bin.code) { <li><span>{{ bin.label }}</span><div class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="barWidth(bin.count, countryChart(summary.countries))"></span></div><strong>{{ bin.count }} <small>({{ percent(bin.count, summary.count) | number:'1.1-1' }} %)</small></strong></li> }</ul>
+          @if (otherCountries(summary.countries).length) { <details class="other-details"><summary>Ver los {{ otherCountries(summary.countries).length }} países agrupados en «Otros»</summary><ul>@for (item of otherCountries(summary.countries); track item.country_id) { <li><span>{{ countryDisplay(item.country_id, item.country_name) }}</span><strong>{{ item.count }} · {{ percent(item.count, summary.count) | number:'1.1-1' }} %</strong></li> }</ul></details> }
+        </article>
+        <article class="chart-card"><h3>Actividad por hora</h3><p>Últimas ocho horas con eventos dentro del filtro; las horas vacías no aparecen. Hora de ocurrencia UTC.</p>
+          <ul class="bars">@for (bin of hourlyChart(summary.hourly_utc); track bin.label) { <li><span>{{ bin.label }}</span><div class="bar-track"><span class="bar" [style.width.%]="barWidth(bin.count, hourlyChart(summary.hourly_utc))"></span></div><strong>{{ bin.count }}</strong></li> }</ul>
+        </article>
+        <article class="chart-card"><h3>Magnitud</h3><p>Recuento de eventos por intervalo de magnitud USGS.</p>
+          <ul class="bars">@for (bin of summary.distributions.magnitude.bins; track bin.label) { <li><span>{{ bin.label }}</span><div class="bar-track"><span class="bar" [style.width.%]="barWidth(bin.count, summary.distributions.magnitude.bins)"></span></div><strong>{{ bin.count }}</strong></li> }</ul>
+          <p class="nulls">Sin magnitud: {{ summary.distributions.magnitude.null_count }}</p>
+        </article>
+        <article class="chart-card"><h3>Profundidad</h3><p>Recuento de eventos por intervalo, en kilómetros.</p>
+          <ul class="bars">@for (bin of summary.distributions.depth_km.bins; track bin.label) { <li><span>{{ bin.label }} km</span><div class="bar-track"><span class="bar" [style.width.%]="barWidth(bin.count, summary.distributions.depth_km.bins)"></span></div><strong>{{ bin.count }}</strong></li> }</ul>
+          <p class="nulls">Sin profundidad: {{ summary.distributions.depth_km.null_count }}</p>
+        </article>
+      </div>
+    } @else { <p class="muted">Los indicadores aparecerán tras la primera lectura de la API.</p> }
+  </section>
+
+  <section id="eventos" class="table-section">
+    <div class="section-heading"><div><span class="section-kicker">04 / DETALLE</span><h2>Eventos</h2></div><p>Primeros {{ tableEvents().length }} registros de la página, por fecha de ocurrencia. Máximo 100 filas visibles.</p></div>
+    <p class="mobile-table-hint">En pantallas pequeñas, desliza la tabla horizontalmente para ver todas las columnas.</p>
+    <div class="table-scroll"><table [attr.aria-busy]="loading()">
+      <thead><tr><th scope="col">Fecha original</th><th scope="col">Magnitud</th><th scope="col">Profundidad (km)</th><th scope="col">Lugar</th><th scope="col">País</th>@if (applied().viewMode === 'replay') { <th scope="col">Reproducido</th> }<th scope="col">ID</th></tr></thead>
+      <tbody>
+        @for (feature of tableEvents(); track feature.id) {
+          <tr><td>{{ date(feature.properties.time) }}</td><td class="numeric">{{ formatMagnitude(feature.properties.mag) }}</td><td class="numeric">{{ depth(feature) }}</td><td>{{ feature.properties.place ?? 'Sin descripción' }}</td><td>{{ countryDisplay(feature.properties.country_id, feature.properties.country_name) }}</td>@if (applied().viewMode === 'replay') { <td>{{ replayDate(feature.properties.replay_at) }}</td> }<td class="event-id">{{ feature.id }}</td></tr>
+        } @empty { <tr><td [attr.colspan]="applied().viewMode === 'replay' ? 7 : 6">No hay eventos para los filtros aplicados.</td></tr> }
+      </tbody>
+    </table></div>
+  </section>
+  <footer>Fuente de terremotos: USGS. Fronteras: Natural Earth. Los recuentos describen el periodo consultado; no predicen terremotos ni riesgo.</footer>
 </main>

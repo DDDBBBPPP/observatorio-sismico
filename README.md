@@ -1,170 +1,163 @@
-# Material del observatorio sísmico
+# Observatorio sísmico
 
-Empieza por `ENUNCIADO.md`. Para una explicación paso a paso, consulta `FAQ-ALUMNADO.md`: contiene preguntas frecuentes, ejemplos de revisiones y duplicados y un itinerario de trabajo. Este paquete aporta el enunciado y la base cartográfica, no una solución completa del proyecto.
+**Panel público:** https://stellar-basbousa-cee41b.netlify.app/
 
-## Hito 001: flujo mínimo verificable
+El proyecto recoge terremotos comunicados por USGS, conserva el original y sus
+revisiones, les asigna un país cuando un polígono lo permite y ofrece un panel
+para explorar magnitud, profundidad, lugar y periodo. La comparación con 2025
+sirve para describir registros con filtros equivalentes; los recuentos por país
+no son una medida de riesgo sísmico ni de cobertura mundial uniforme.
 
-Este repositorio contiene ya el flujo sintético de cinco servicios separado del
-frontend: `producer/`, `consumer/`, `api/`, Kafka y PostgreSQL. El verificador
-externo está en `tools/verifier/`; no es un sexto servicio Compose. El flujo
-actual demuestra arranque, salud técnica y el recorrido de un evento sintético
-por Kafka. Todavía no implementa ingesta USGS real, persistencia de terremotos,
-API sísmica de consulta, despliegue en Netlify ni exposición mediante ngrok.
+## Vídeos
 
-### Arranque reproducible en Windows
+- [Explicación del proyecto](https://drive.google.com/file/d/1BxeGnGW96TmwLlfYy6Q2xF9xcdUc-sXO/view?usp=drive_link)
+- [Demostración del observatorio](https://drive.google.com/file/d/1luSHvvdCsMak4LxWyrsa_XtR1_vEmL3Q/view?usp=drive_link)
 
-Requisitos: Docker Desktop con el motor Linux iniciado y Compose v2, Git,
-PowerShell, Python 3.14 o compatible para el verificador local y Node.js/npm
-para el frontend. Desde la raíz de un clon nuevo:
+## Recorrido de los datos
+
+```text
+USGS → productor Python → Kafka → consumidor Python → PostgreSQL
+                                               ↓
+                                  FastAPI → Angular + Leaflet
+                                               ↑
+                                   Natural Earth (países)
+```
+
+| Servicio Compose | Función |
+| --- | --- |
+| `producer` | Consulta cada minuto el feed USGS y publica eventos nuevos o revisados. |
+| `kafka` | Transporta mensajes live y replay en topics distintos. |
+| `consumer` | Valida, versiona, asigna país y persiste; aparta mensajes defectuosos. |
+| `postgres` | Guarda versiones, estado actual, originales, checkpoints y cuarentena. |
+| `api` | Expone salud, eventos GeoJSON y estadísticas a la interfaz. |
+
+Angular se ejecuta aparte: localmente con `npm start` o publicado en Netlify.
+El mapa usa Leaflet y el catálogo Natural Earth incluido en el repositorio.
+El túnel ngrok publica **solo la API** por HTTPS; Kafka y PostgreSQL no se
+exponen. Véanse el [modelo](docs/MODELO-DATOS.md), el
+[SQL del esquema](consumer/src/migrations/001_ingestion_schema.sql) y el
+[diccionario](docs/DICCIONARIO-DATOS.md).
+
+## Tres conjuntos diferentes
+
+- **Live:** `all_day.geojson` es una ventana móvil de 24 horas, consultada
+  periódicamente. Una respuesta nueva puede traer eventos tardíos o revisiones.
+- **Histórico:** instantánea del catálogo USGS de `[2025-01-01, 2026-01-01)`
+  UTC, mundo, `type=earthquake`, magnitud ≥4. La copia documentada tiene
+  **18.302 eventos**; otra descarga futura puede diferir.
+- **Replay:** esta instalación reenvió realmente **diez eventos históricos**
+  por Kafka a tablas separadas. REPRODUCCIÓN filtra dentro de esos diez;
+  elegir otras fechas no inicia otro reenvío. Diez no es un límite de Kafka
+  ni representa todo el histórico. Sus tiempos de ocurrencia son antiguos y
+  no se suman al live.
+
+`event_id` es la clave Kafka. PostgreSQL conserva una versión única por
+`(event_id, updated)`; una revisión posterior sustituye el estado actual y un
+duplicado o versión antigua no lo retrocede. Los mensajes irrecuperables van a
+cuarentena para evitar un bucle de reinicio. Los originales y su procedencia
+son verificables. «Sin país asignado» incluye mar y puntos fuera de los
+polígonos simplificados; no equivale a evento inválido. Magnitud y profundidad
+desconocidas permanecen como `null`/ND. Más detalle en
+[calidad y análisis](docs/ANALISIS-CALIDAD.md).
+
+## Arranque local en Windows
+
+Requisitos: Git, Docker Desktop con motor Linux y Compose v2, PowerShell,
+Python 3.12+ y Node.js 22.12+ con npm. Para instalar esta versión del proyecto:
 
 ```powershell
+git clone --branch 002-ingesta-usgs-persistencia --single-branch https://github.com/DDDBBBPPP/observatorio-sismico.git
+Set-Location observatorio-sismico
 Copy-Item .env.example .env
+notepad .env
 docker compose config --quiet
 docker compose up --build -d
 docker compose ps
-Invoke-WebRequest http://127.0.0.1:8000/api/salud
+Invoke-RestMethod http://127.0.0.1:8000/api/salud
 ```
 
-Los cinco servicios Compose son `kafka`, `postgres`, `producer`, `consumer` y
-`api`. Hay que comprobar que sus estados sean `healthy`; el endpoint
-`/api/salud` solo informa del estado técnico de la API y no demuestra una
-ingesta sísmica.
+Cambie en `.env` la contraseña de desarrollo y añada a `CORS_ORIGINS` los
+orígenes desde los que abrirá el panel. No publique `.env` ni el token ngrok.
+Espere a que **los cinco servicios** aparezcan `healthy` en `docker compose ps`.
+La API local está en http://127.0.0.1:8000/docs y su salud en
+http://127.0.0.1:8000/api/salud. Los volúmenes de Kafka y PostgreSQL conservan
+los datos entre reinicios; no use `docker compose down -v` para esta instalación.
 
-El topic de prueba se crea con una partición y un factor de réplica de uno.
-Para ejecutar una prueba sintética controlada y obtener el `run_id`:
+Compose inicia automáticamente **live**. **No descarga ni carga el histórico
+2025**. Una instalación limpia necesita esa operación separada para mostrar
+la comparación histórica o ejecutar replay. Los comandos y checkpoints están
+en la [guía de instalación](docs/GUIA-INSTALACION.md); no repita esa carga en
+una instalación que ya tenga el histórico.
 
-```powershell
-$startedAt = (Get-Date).ToUniversalTime().ToString("o")
-docker compose exec -T producer python /app/src/main.py publish-test
-```
-
-Con el `run_id` mostrado por el productor, ejecuta el verificador desde la
-raíz (sustituyendo la variable por el valor observado):
-
-```powershell
-$runId = "run-REEMPLAZAR"
-python tools\verifier\verify_event.py `
-  --evidence-dir "evidence\001-minimal-kafka-flow\$runId" `
-  --run-id $runId --started-at $startedAt
-```
-
-El JSON del productor, el recibido por el consumidor y la verificación se
-guardan bajo `evidence/001-minimal-kafka-flow/` durante la ejecución local.
-Las ejecuciones regenerables y los volúmenes Docker están ignorados por Git;
-consulta `specs/001-minimal-kafka-flow/quickstart.md` para los comandos
-completos y las pruebas negativas del hito.
-
-El frontend Angular se inicia por separado y sigue siendo una demostración:
+Para abrir el panel local sin túnel, ajuste la URL de la API en el archivo de
+configuración público y arranque Angular en otra consola:
 
 ```powershell
+$configPath = (Resolve-Path frontend/public/config.json).Path
+$cfg = Get-Content $configPath -Raw | ConvertFrom-Json
+$cfg.apiUrl = 'http://127.0.0.1:8000'
+[System.IO.File]::WriteAllText($configPath, ($cfg | ConvertTo-Json -Depth 10), [System.Text.UTF8Encoding]::new($false))
 Set-Location frontend
 npm ci
-npm start
+npm start -- --host 127.0.0.1 --poll 2000
 ```
 
-Abre `http://localhost:4200`. Levantar Compose no configura por sí solo el
-frontend, USGS, la API sísmica, Netlify ni ngrok; esas integraciones pertenecen
-a hitos posteriores y requieren configuración y validaciones propias.
+Abra http://127.0.0.1:4200/. Restablezca una URL HTTPS de túnel en
+`frontend/public/config.json` antes de compilar para Netlify. El panel ofrece
+la vista inicial **«Comparación mundial · magnitud ≥4»** y la exploración
+**«Todos los registros comunicados por USGS»**; los filtros aplicados y la
+ventana UTC aparecen explícitos. Mapa, gráficos y tabla usan los mismos filtros.
 
-## 1. Ejecutar el mapa de demostración
+## Publicación desde otra instalación
 
-Requisitos: Node.js 22.12 o posterior dentro de la rama 22, o Node 24; npm; acceso a Internet para instalar dependencias y descargar el mapa base.
+Inicie `ngrok http 8000` con su cuenta configurada **localmente** y copie la
+URL HTTPS que entregue. Compruebe `https://SU-TUNEL/api/salud`. Ponga esa URL
+base, sin `/api`, en `frontend/public/config.json` como `apiUrl`; conserve
+`mode: "api"` y `skipNgrokWarning: true`. Añada el origen exacto de su sitio
+Netlify a `CORS_ORIGINS` en `.env` y aplique el cambio recreando solo la API.
+Desde `frontend/`, ejecute `npm run build` y publique
+`frontend/dist/observatorio/browser` en Netlify. Los pasos y una comprobación
+de CORS figuran en la [guía de instalación](docs/GUIA-INSTALACION.md).
 
-```bash
-cd frontend
-npm ci
-npm start
+La web **permanece servida por Netlify** aunque se apague el equipo, pero los
+datos de la API requieren PC, Docker y túnel activos. Una compilación local no
+actualiza automáticamente la web pública: hay que publicar el build nuevo.
+
+## Pruebas y evidencias
+
+Con los servicios sanos y el histórico preparado, desde la raíz:
+
+```powershell
+python tools/run_checks.py
+docker compose config --quiet
 ```
 
-Abre http://localhost:4200 . Verás fronteras reales de países y **cuatro eventos ficticios**. Comprueba zoom, desplazamiento, selector de capas y fichas al pulsar. Si OpenStreetMap no responde, desactiva esa capa: las fronteras y puntos incluidos siguen siendo locales.
+`run_checks.py` limita la duración de cada prueba e incluye contrato API,
+filtros, SQL, componente Angular, build e integración Kafka. Su prueba de
+integración interrumpe el consumidor: **no la ejecute durante una medición de
+disponibilidad**. Las pruebas y observaciones están en
+[aceptación](docs/ACEPTACION.md).
 
-Se fija Angular 20.3, ngx-leaflet 20.0 y Leaflet 1.9.4 como combinación reproducible; no se pretende elegir las últimas versiones. Para un proyecto Angular existente, selecciona la versión de ngx-leaflet compatible con tu Angular en su changelog. No copies este package.json sobre un proyecto ajeno.
+- [Calidad, transformaciones y tres conclusiones](docs/ANALISIS-CALIDAD.md)
+- [Modelo de datos](docs/MODELO-DATOS.md) y [diccionario](docs/DICCIONARIO-DATOS.md)
+- [Complejidad y costes](docs/ANALISIS-COMPLEJIDAD-COSTES.md)
+- [Resultados y pruebas de aceptación](docs/ACEPTACION.md)
+- [Capturas y manifiesto UTC](evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/manifest.json)
+- [Guion de defensa](docs/GUIA-DEFENSA.md)
+- [Fuentes y licencias](FUENTES-Y-LICENCIAS.md)
 
-## 2. Qué archivos dibujan el mapa
+## Prueba de funcionamiento durante 24 horas
 
-| Archivo | Función |
-|---|---|
-| `src/app/app.component.ts` | Inicializa capas, carga GeoJSON y actualiza los puntos |
-| `src/app/app.component.html` | Contenedor del mapa, estado y leyenda |
-| `src/app/app.component.css` | Tamaño y presentación del mapa |
-| `src/styles.css` | Estilos globales |
-| `public/datos/paises.geojson` | Catálogo completo entregado, sin modificación |
-| `public/datos/terremotos-demo.geojson` | Muestra sintética inicial |
-| `public/config.json` | Modo demo o API y URL del backend |
-| `angular.json` | Carga también el CSS de Leaflet y copia public al build |
+Del 18 al 19 de noviembre de 2026, un monitor local registró una muestra cada
+cinco minutos durante 24 horas. Obtuvo las 289 muestras previstas: los cinco
+servicios aparecieron saludables en todas ellas, sin errores de muestra ni
+huecos superiores a 450 segundos. La última consulta correcta a USGS tuvo una
+antigüedad máxima de 79,6 segundos y el lag Kafka medido fue de 0 mensajes.
+El contador acumulado de errores de consulta permaneció estable durante la
+prueba.
 
-`L.geoJSON()` interpreta Polygon/MultiPolygon y el orden de coordenadas automáticamente. Para crear un círculo manualmente se utiliza `[latitud, longitud]`. Las fronteras se dibujan sin relleno sobre OpenStreetMap. Se utiliza la proyección predeterminada del mapa base (Web Mercator): no superpongas un mapamundi equirectangular como si fuera compatible sin reproyectarlo. El catálogo ya contiene la representación cartográfica; no es necesario dibujar sobre una imagen JPG.
-
-El componente sustituye la capa de eventos en cada respuesta: no acumula una copia por refresco. El backend sigue siendo responsable de servir una sola versión actual por evento. Se usan nodos DOM con texto para las fichas, evitando interpretar descripciones como HTML.
-
-## 3. Conectar la API
-
-El backend completo debe ejecutarse en Docker: productor Python, consumidor Python, Kafka, PostgreSQL y API FastAPI, como cinco servicios de Compose. El alumnado debe crear sus Dockerfile(s) y `compose.yaml`; este paquete aporta la base del frontend, no un backend implementado.
-
-Una vez implementados esos archivos, arranca los servicios:
-
-```bash
-docker compose up --build -d
-```
-
-Usa nombres de servicio entre contenedores (por ejemplo `kafka`, `postgres` y `api`), configura salud/reintentos y conserva los datos en volúmenes. La API debe escuchar en `0.0.0.0:8000` dentro del contenedor y respetar `CONTRATO-API.md`.
-
-**Opción A: ngrok instalado en el equipo.** Publica el puerto de la API con `127.0.0.1:8000:8000`. Configura ngrok en tu cuenta y ejecuta:
-
-```bash
-ngrok http 8000
-```
-
-**Opción B: ngrok en otro contenedor de la misma red Compose.** El comando del agente apuntará al nombre del servicio:
-
-```bash
-ngrok http http://api:8000
-```
-
-No uses `localhost:8000` desde el contenedor de ngrok: apuntaría al propio contenedor. Para esta opción no es necesario publicar el puerto de la API en el host. Proporciona el authtoken al agente mediante una variable de entorno o secreto, nunca en el frontend ni en Git.
-
-**HTTPS sin certificados en FastAPI.** La dirección pública es HTTPS y ngrok proporciona y renueva el certificado. La conexión con el agente también está cifrada; el agente puede comunicarse con la API por HTTP dentro del equipo o de la red Docker. No hace falta configurar certificados en Uvicorn ni añadir un proxy TLS para esta práctica. El plan gratuito tiene cuotas de uso.
-
-Cambia `frontend/public/config.json`:
-
-```json
-{
-  "mode": "api",
-  "apiUrl": "https://TU-DOMINIO-ASIGNADO",
-  "refreshMs": 60000,
-  "skipNgrokWarning": true
-}
-```
-
-`apiUrl` no termina en `/api`: el componente añade `/api/eventos`. Usa el dominio asignado realmente a tu cuenta. Recarga la página después de cambiar la configuración. Configura CORS en el backend. Una llamada OPTIONS puede preceder al GET por la cabecera de ngrok; no la bloquees.
-
-La consulta se programa después de terminar la anterior, evitando peticiones solapadas. El timeout es de 15 segundos. Si falla, se conserva la capa anterior y se muestra un aviso. Al destruir el componente se cancela la petición y el temporizador. La interfaz inicial muestra cuándo se leyó y generó la respuesta; añade la última ingesta real de USGS para detectar un productor parado.
-
-## 4. Publicar en Netlify
-
-1. Sube el proyecto a tu repositorio sin node_modules ni secretos.
-2. Conecta el repositorio a Netlify.
-3. Si el repositorio contiene todo el paquete, establece **Base directory: frontend**. Si subes solo frontend como raíz, deja la base vacía.
-4. Comando de build: `npm run build`. Carpeta publicada relativa a esa base: `dist/observatorio/browser`.
-5. El `netlify.toml` incluido contiene esos valores; `_redirects` permite recargar rutas SPA.
-6. Ajusta CORS al dominio de Netlify. Verifica la web desde otro dispositivo.
-
-No requiere SSR. Si integras el componente en una aplicación SSR existente, carga Leaflet solo en navegador; el ejemplo entregado es exclusivamente SPA.
-
-`config.json` se copia al build: cuando cambies el dominio del backend, publica una nueva versión o actualiza el archivo servido por tu procedimiento de despliegue. No guardes claves en ese archivo público.
-
-## 5. Lo que debes desarrollar
-
-Productor, consumidor, almacenamiento, API, integración espacial, agregaciones, filtros y gráficas. El mapa se entrega para que el trabajo se centre en los datos. La clasificación por país que aparece en el popup la entrega el backend; dibujar fronteras no calcula automáticamente esa clasificación.
-
-En `ENUNCIADO.md` tienes las pruebas y la rúbrica. En `FUENTES-Y-LICENCIAS.md`, procedencia y condiciones. En `VALIDACION.md`, las comprobaciones realizadas sobre el material base.
-
-## 6. Cómo documentar la calidad, sin añadir una aplicación de informes
-
-Incluye un apartado en la memoria o un notebook con tus comprobaciones, resultados y decisiones. Puedes ejecutar consultas SQL sobre PostgreSQL o código Python sobre los datos originales y preparados; no necesitas desarrollar un generador de informes.
-
-Ejemplo: muestra la consulta/código que cuenta magnitudes nulas, su resultado y el porcentaje; explica por qué conservas los nulos y cómo los tratas al calcular medias. Haz lo mismo con duplicados, anomalías y las demás dimensiones que analices. Indica el conjunto de datos, periodo y denominador utilizado y compara antes/después cuando corresponda.
-
-El consumidor valida, transforma y persiste datos; además conserva los rechazos y sus motivos. El alumnado prepara el apartado de calidad a partir de esas evidencias. **No es obligatorio crear `generar_informe_calidad.py`, una tabla específica de métricas/incidencias de calidad ni un panel de calidad en Angular.** El registro duradero de cuarentena solicitado en el enunciado sí debe conservarse, mediante una tabla o una solución equivalente documentada.
-
-Generar automáticamente un Markdown/HTML de calidad o mostrar esas métricas en la web son ampliaciones opcionales. No añaden por sí mismas puntos ni son necesarias para el nivel máximo: se evalúan la calidad del análisis y las acciones justificadas.
+El [registro íntegro de las 289 muestras](evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl)
+y el [análisis de la prueba](docs/ACEPTACION.md#medición-local-de-24-horas-completada--19-11-2026)
+permiten revisar el periodo, los resultados y el SHA-256 del archivo. La
+medición se hizo en el equipo local cada cinco minutos; no mide los segundos
+entre muestras ni la disponibilidad continua de la web pública y el túnel.

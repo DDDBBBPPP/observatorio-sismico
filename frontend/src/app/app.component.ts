@@ -1,35 +1,86 @@
-import { Component, OnDestroy, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, computed, signal } from '@angular/core';
 import { LeafletDirective } from '@bluehalo/ngx-leaflet';
 import * as L from 'leaflet';
 import type { FeatureCollection, Point } from 'geojson';
+import { buildQuery, emptyFilters, type FilterState } from './filter-query';
 
-type Properties = { mag: number | null; place: string; time: number; updated: number; country_name?: string | null };
-type Events = FeatureCollection<Point, Properties> & { metadata?: { generated?: number; mode?: string } };
+type Properties = { mag: number | null; place: string | null; time: number; updated: number; country_id?: string | null; country_name?: string | null; replay_at?: string | null };
+type Events = FeatureCollection<Point, Properties> & { metadata?: { generated?: number; mode?: string; total?: number; truncated?: boolean; last_source_fetch?: number | null; filters?: { country_id: string | null; min_mag: number | null; min_depth_km: number | null; max_depth_km: number | null } } };
+type Trace = { scope: string; last_new_event_persisted_at: string | null; last_persisted_at: string | null; revisions_stored: number; duplicates_discarded: number | null; quarantined: number; consumer_lag_messages: number | null };
+type Health = { trace?: Trace };
 type Config = { mode: 'demo' | 'api'; apiUrl: string; refreshMs: number; skipNgrokWarning: boolean };
+type Bin = { label: string; count: number };
+type Country = { code: string; name: string };
+type CountryStat = { country_id: string; country_name: string; count: number };
+type CountryBin = Bin & { code: string };
+type Statistics = { count: number; period: { start: string; end: string }; filters: { min_mag: number | null; country_id: string | null; min_depth_km: number | null; max_depth_km: number | null }; hourly_utc: { hour_utc: string; count: number }[]; countries: CountryStat[]; distributions: { magnitude: { bins: Bin[]; null_count: number }; depth_km: { bins: Bin[]; null_count: number } }; historical_comparison?: { average_for_window: number; current_window_events: number; min_mag: number; window_days: number; events: number } };
+type QuickView = 'comparison' | 'all';
+const quickFilters = (view: QuickView): FilterState => ({ ...emptyFilters('live'), minMag: view === 'comparison' ? '4' : '' });
 
 @Component({
-  selector: 'app-root', standalone: true, imports: [LeafletDirective],
+  selector: 'app-root', standalone: true, imports: [CommonModule, LeafletDirective],
   templateUrl: './app.component.html', styleUrl: './app.component.css'
 })
 export class AppComponent implements OnDestroy {
   readonly mode = signal('Cargando configuración');
   readonly status = signal('Preparando el mapa…');
+  readonly loading = signal(false);
+  readonly hasError = signal(false);
   readonly lastRead = signal('Sin lectura');
   readonly generated = signal('Sin información');
+  readonly lastIngestion = signal('Sin información');
+  readonly latestEvent = signal('Sin eventos en el filtro');
   readonly count = signal(0);
   readonly omitted = signal(0);
   readonly countriesStatus = signal('Cargando catálogo');
+  readonly countryOptions = signal<Country[]>([]);
+  readonly apiStale = signal('');
+  readonly stats = signal<Statistics | null>(null);
+  readonly trace = signal<Trace | null>(null);
+  readonly appliedPeriod = signal('Esperando respuesta de la API');
+  readonly start = signal('');
+  readonly end = signal('');
+  readonly minMag = signal('4');
+  readonly minDepthKm = signal('');
+  readonly maxDepthKm = signal('');
+  readonly country = signal('');
+  readonly viewMode = signal<'live' | 'replay'>('live');
+  readonly applied = signal<FilterState>(quickFilters('comparison'));
+  readonly quickView = signal<QuickView>('comparison');
+  readonly pending = computed(() => JSON.stringify(this.draft()) !== JSON.stringify(this.applied()));
+  readonly activeQuickView = computed(() => {
+    const selected = this.applied();
+    if (selected.viewMode !== 'live' || selected.country || selected.start || selected.end || selected.minDepthKm || selected.maxDepthKm) return null;
+    if (selected.minMag === '4') return 'comparison';
+    if (!selected.minMag) return 'all';
+    return null;
+  });
+  readonly appliedLabel = computed(() => {
+    const selected = this.applied();
+    const period = selected.start || selected.end ? `${selected.start.replace('T', ' ') || '24 h antes del final'} → ${selected.end.replace('T', ' ') || 'ahora'} UTC` : 'últimas 24 h UTC';
+    const name = selected.country === 'UNASSIGNED' ? 'Sin país asignado' : this.countryOptions().find(item => item.code === selected.country)?.name;
+    const depth = selected.minDepthKm || selected.maxDepthKm ? `profundidad ${selected.minDepthKm || 'sin mínimo'}–${selected.maxDepthKm || 'sin máximo'} km (inclusive)` : 'profundidad: todas';
+    return `${selected.viewMode === 'replay' ? 'REPRODUCCIÓN' : 'Datos reales'} · ${period} · magnitud ${selected.minMag ? `≥${selected.minMag}` : 'todas'} · ${depth} · ${selected.country ? `${name || selected.country}${name ? ` (${selected.country})` : ''}` : 'mundo'}`;
+  });
+  readonly truncated = signal(false);
+  readonly tableEvents = signal<FeatureCollection<Point, Properties>['features']>([]);
   readonly options: L.MapOptions = { center: L.latLng(18, 0), zoom: 2, minZoom: 2, maxZoom: 8, preferCanvas: true, worldCopyJump: false };
   private map?: L.Map;
   private events = L.layerGroup();
+  private positions: L.LatLng[] = [];
+  private readonly countryPolygons = new Map<string, FeatureCollection['features'][number]>();
+  private selectedCountryLayer = L.geoJSON(undefined, { renderer: L.svg(), style: { color: '#39C4BF', weight: 3, fillColor: '#39C4BF', fillOpacity: .16 } } as L.GeoJSONOptions & L.PathOptions);
   private timer?: ReturnType<typeof setTimeout>;
   private controller = new AbortController();
   private destroyed = false;
+  private requestId = 0;
+  private currentConfig?: Config;
 
   async onMapReady(map: L.Map): Promise<void> {
     this.map = map;
     const base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, noWrap: true, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      maxZoom: 19, noWrap: false, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     const borders = L.geoJSON(undefined, { style: { color: '#334155', weight: 1, fill: false },
       onEachFeature: (feature, layer) => {
@@ -39,38 +90,73 @@ export class AppComponent implements OnDestroy {
       }
     }).addTo(map);
     this.events.addTo(map);
-    L.control.layers({ 'OpenStreetMap': base }, { 'Países (Natural Earth)': borders, 'Terremotos': this.events }).addTo(map);
+    this.selectedCountryLayer.addTo(map);
+    L.control.layers({ 'OpenStreetMap': base }, { 'Países (Natural Earth)': borders, 'País seleccionado': this.selectedCountryLayer, 'Terremotos': this.events }).addTo(map);
     map.attributionControl.addAttribution('Fronteras: Natural Earth · Datos reales: USGS');
     try {
-      borders.addData(await this.readJson<FeatureCollection>('datos/paises.geojson'));
+      const catalog = await this.readJson<FeatureCollection>('datos/paises.geojson');
+      borders.addData(catalog);
+      for (const feature of catalog.features) {
+        const code = String(feature.properties?.['ADM0_A3'] ?? '');
+        if (code) this.countryPolygons.set(code, feature);
+      }
+      const countries = catalog.features.map(feature => ({
+        code: String(feature.properties?.['ADM0_A3'] ?? ''),
+        name: String(feature.properties?.['NAME_ES'] || feature.properties?.['ADMIN'] || feature.properties?.['NAME'] || '')
+      })).filter(item => item.code && item.name);
+      this.countryOptions.set(countries.sort((a, b) => a.name.localeCompare(b.name, 'es')));
       this.countriesStatus.set('Catálogo de países cargado');
     } catch { this.countriesStatus.set('No se pudo cargar el catálogo de países'); }
     if (this.destroyed) return;
     try {
       const config = await this.readJson<Config>('config.json');
       if (!['demo', 'api'].includes(config.mode)) throw new Error('Modo inválido');
+      this.currentConfig = config;
       this.mode.set(config.mode === 'demo' ? 'DEMOSTRACIÓN · datos ficticios' : 'API · datos del backend');
-      await this.refresh(config);
+      await this.refresh(config, this.applied());
     } catch { this.status.set('Error: revisa public/config.json'); }
   }
 
   private async readJson<T>(url: string, headers: Record<string, string> = {}): Promise<T> {
-    const response = await fetch(url, { headers, cache: 'no-store',
-      signal: AbortSignal.any([this.controller.signal, AbortSignal.timeout(15000)]) });
+    const response = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.any([this.controller.signal, AbortSignal.timeout(15000)]) });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json() as Promise<T>;
   }
-
-  private async refresh(config: Config): Promise<void> {
+  private draft(): FilterState {
+    return { viewMode: this.viewMode(), start: this.start(), end: this.end(), minMag: this.minMag(), minDepthKm: this.minDepthKm(), maxDepthKm: this.maxDepthKm(), country: this.country() };
+  }
+  private async refresh(config: Config, selected: FilterState, recenter = false): Promise<void> {
+    clearTimeout(this.timer);
+    const requestId = ++this.requestId;
+    this.loading.set(true);
     try {
-      const url = config.mode === 'demo' ? 'datos/terremotos-demo.geojson' : `${config.apiUrl.replace(/\/$/, '')}/api/eventos`;
       const headers: Record<string, string> = {};
       if (config.mode === 'api' && config.skipNgrokWarning) headers['ngrok-skip-browser-warning'] = '1';
-      const data = await this.readJson<Events>(url, headers);
-      if (this.destroyed) return;
+      const query = config.mode === 'api' ? buildQuery(selected) : '';
+      const base = config.apiUrl.replace(/\/$/, '');
+      const data = await this.readJson<Events>(config.mode === 'demo' ? 'datos/terremotos-demo.geojson' : `${base}/api/eventos${query}`, headers);
+      if (this.destroyed || requestId !== this.requestId) return;
       if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) throw new Error('Se esperaba FeatureCollection');
-      // Construir primero la nueva capa: si falla, conservar la anterior.
-      const next = L.layerGroup(); let omitted = 0; let count = 0;
+      const summary = config.mode === 'api' ? await this.readJson<Statistics>(`${base}/api/estadisticas${query}`, headers) : null;
+      if (this.destroyed || requestId !== this.requestId) return;
+      const health = config.mode === 'api' ? await this.readJson<Health>(`${base}/api/salud`, headers).catch(() => null) : null;
+      if (this.destroyed || requestId !== this.requestId) return;
+      const requestedMinDepth = selected.minDepthKm.trim() ? Number(selected.minDepthKm) : null;
+      const requestedMaxDepth = selected.maxDepthKm.trim() ? Number(selected.maxDepthKm) : null;
+      if (config.mode === 'api' && (data.metadata?.mode !== selected.viewMode ||
+        data.metadata?.filters?.country_id !== (selected.country || null) ||
+        data.metadata?.filters?.min_mag !== (selected.minMag ? Number(selected.minMag) : null) ||
+        data.metadata?.filters?.min_depth_km !== requestedMinDepth ||
+        data.metadata?.filters?.max_depth_km !== requestedMaxDepth ||
+        summary?.filters.country_id !== (selected.country || null) ||
+        summary?.filters.min_mag !== (selected.minMag ? Number(selected.minMag) : null) ||
+        summary?.filters.min_depth_km !== requestedMinDepth ||
+        summary?.filters.max_depth_km !== requestedMaxDepth)) {
+        throw new Error('La API no confirmó los filtros solicitados');
+      }
+      const next = L.layerGroup();
+      const positions: L.LatLng[] = [];
+      let omitted = 0;
       for (const feature of data.features) {
         const p = feature.properties;
         const c = feature.geometry?.type === 'Point' ? feature.geometry.coordinates : [];
@@ -80,24 +166,132 @@ export class AppComponent implements OnDestroy {
         const depthOk = typeof depth === 'number' && Number.isFinite(depth);
         const color = !depthOk ? '#64748b' : depth < 70 ? '#e8a317' : depth < 300 ? '#e35b37' : '#7b3fb6';
         const popup = document.createElement('div');
-        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${magnitude ?? 'ND'}\nProfundidad: ${depthOk ? depth + ' km' : 'ND'}\nFecha UTC: ${this.date(p.time)}\nPaís: ${p.country_name ?? 'Sin país asignado'}\nID: ${feature.id ?? 'ND'}`;
-        L.circleMarker([lat, lon], { radius: magnitude === null ? 4 : Math.max(3, Math.min(18, 3 + (magnitude + 1) * 2)), color, fillColor: color, fillOpacity: .75, weight: 1 }).bindPopup(popup).addTo(next);
-        count++;
+        popup.textContent = `${p.place ?? 'Sin descripción'}\nMagnitud: ${this.formatMagnitude(magnitude)}\nProfundidad: ${depthOk ? this.formatDepth(depth) + ' km' : 'ND'}\nFecha original: ${this.date(p.time)}\n${selected.viewMode === 'replay' ? `Reproducido: ${this.replayDate(p.replay_at)}\n` : ''}País: ${this.countryDisplay(p.country_id, p.country_name)}\nID: ${feature.id ?? 'ND'}`;
+        const point = L.latLng(lat, lon);
+        positions.push(point);
+        L.circleMarker(point, { radius: magnitude === null ? 4 : Math.max(3, Math.min(18, 3 + (magnitude + 1) * 2)), color, fillColor: color, fillOpacity: .75, weight: 1 }).bindPopup(popup).addTo(next);
       }
       this.events.clearLayers(); this.events.addLayer(next);
-      this.count.set(count); this.omitted.set(omitted);
-      this.lastRead.set(new Date().toISOString());
+      this.positions = positions;
+      this.selectedCountryLayer.clearLayers();
+      const selectedPolygon = selected.country && selected.country !== 'UNASSIGNED' ? this.countryPolygons.get(selected.country) : undefined;
+      if (selectedPolygon) this.selectedCountryLayer.addData(selectedPolygon);
+      if (recenter && this.map) {
+        if (selected.viewMode === 'live' && !selected.country && !selected.start && !selected.end && !selected.minMag) this.map.setView(this.options.center!, this.options.zoom!);
+        else if (positions.length === 1) this.map.setView(positions[0], 5);
+        else if (positions.length > 1 && (selected.country !== 'UNASSIGNED' || positions.length <= 30)) this.map.fitBounds(L.latLngBounds(positions).pad(0.15), { maxZoom: 6 });
+        else if (!positions.length && selectedPolygon) this.map.fitBounds(this.selectedCountryLayer.getBounds().pad(0.12), { maxZoom: 6 });
+      }
+      this.count.set(positions.length);
+      this.omitted.set(omitted);
+      this.truncated.set(Boolean(data.metadata?.truncated));
+      this.lastRead.set(this.date(Date.now()));
       this.generated.set(this.date(data.metadata?.generated));
-      this.status.set(config.mode === 'demo' ? 'Ejemplo estático: no representa actividad real' : 'API accesible · consulta completada');
-    } catch {
-      if (!this.destroyed) this.status.set('No se pudo actualizar: se conserva la última lectura. Revisa API, túnel y CORS.');
+      this.tableEvents.set(data.features.slice(0, 100));
+      this.latestEvent.set(data.features.length ? this.date(data.features[0].properties.time) : 'Sin eventos en el filtro');
+      const sourceFetch = data.metadata?.last_source_fetch;
+      this.lastIngestion.set(sourceFetch ? this.date(sourceFetch) : 'Sin consulta confirmada');
+      this.apiStale.set(selected.viewMode === 'live' && sourceFetch && Date.now() - sourceFetch > 10 * 60 * 1000
+        ? 'Aviso: la última consulta USGS correcta supera 10 minutos.' : '');
+      this.stats.set(summary);
+      this.trace.set(health?.trace ?? null);
+      this.applied.set({ ...selected });
+      this.appliedPeriod.set(summary?.period ? `${summary.period.start.replace('T', ' ').slice(0, 16)} → ${summary.period.end.replace('T', ' ').slice(0, 16)} UTC` : this.appliedLabel());
+      this.hasError.set(false);
+      this.status.set(config.mode === 'demo' ? 'Ejemplo estático: no representa actividad real' : selected.viewMode === 'replay' ? 'REPRODUCCIÓN · consulta completada' : 'API accesible · consulta completada');
+    } catch (error) {
+      if (!this.destroyed && requestId === this.requestId) {
+        this.hasError.set(true);
+        this.status.set(`No se pudo actualizar: se conserva la última lectura. ${error instanceof Error ? error.message : 'Revisa API, túnel y CORS.'}`);
+      }
     } finally {
-      if (!this.destroyed && config.mode === 'api') this.timer = setTimeout(() => void this.refresh(config), Math.max(30000, Number(config.refreshMs) || 60000));
+      if (!this.destroyed && requestId === this.requestId) {
+        this.loading.set(false);
+        if (config.mode === 'api') this.timer = setTimeout(() => void this.refresh(config, this.applied()), Math.max(30000, Number(config.refreshMs) || 60000));
+      }
     }
   }
-  private date(value: unknown): string {
+  applyFilter(name: 'start' | 'end' | 'minMag' | 'minDepthKm' | 'maxDepthKm' | 'country', event: Event): void {
+    this[name].set((event.target as HTMLInputElement).value);
+  }
+  applyFilters(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.draft(), true); }
+  selectQuickView(view: QuickView): void {
+    const selected = quickFilters(view);
+    this.quickView.set(view);
+    this.viewMode.set('live'); this.start.set(''); this.end.set('');
+    this.minMag.set(selected.minMag); this.minDepthKm.set(''); this.maxDepthKm.set(''); this.country.set('');
+    if (this.currentConfig) void this.refresh(this.currentConfig, selected, true);
+  }
+  retry(): void { if (this.currentConfig) void this.refresh(this.currentConfig, this.applied()); }
+  fitMap(): void {
+    if (!this.map) return;
+    if (this.positions.length === 1) this.map.setView(this.positions[0], 5);
+    else if (this.positions.length > 1) this.map.fitBounds(L.latLngBounds(this.positions).pad(0.12), { maxZoom: 6 });
+    else if (this.applied().country && this.applied().country !== 'UNASSIGNED' && this.countryPolygons.has(this.applied().country)) this.map.fitBounds(this.selectedCountryLayer.getBounds().pad(0.12), { maxZoom: 6 });
+    else this.map.setView(this.options.center!, this.options.zoom!);
+  }
+  clearFilters(): void {
+    const empty = this.viewMode() === 'replay' ? emptyFilters('replay') : quickFilters(this.quickView());
+    this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(empty.minMag); this.minDepthKm.set(''); this.maxDepthKm.set(''); this.country.set('');
+    if (this.currentConfig) void this.refresh(this.currentConfig, empty, true);
+  }
+  setViewMode(event: Event): void {
+    const viewMode = (event.target as HTMLSelectElement).value === 'replay' ? 'replay' : 'live';
+    const empty = viewMode === 'replay' ? emptyFilters('replay') : quickFilters(this.quickView());
+    this.viewMode.set(viewMode); this.start.set(empty.start); this.end.set(empty.end); this.minMag.set(empty.minMag); this.minDepthKm.set(''); this.maxDepthKm.set(''); this.country.set('');
+    if (this.currentConfig) void this.refresh(this.currentConfig, empty, true);
+  }
+  barWidth(count: number, values: { count: number }[]): number {
+    return Math.max(2, Math.round(100 * count / Math.max(1, ...values.map(value => value.count))));
+  }
+  countryName(code: string | null | undefined, fallback?: string | null): string {
+    if (!code || code === 'UNASSIGNED') return 'Sin país asignado';
+    return this.countryOptions().find(item => item.code === code)?.name || fallback || code;
+  }
+  countryDisplay(code: string | null | undefined, fallback?: string | null): string {
+    return code && code !== 'UNASSIGNED' ? `${this.countryName(code, fallback)} (${code})` : 'Sin país asignado';
+  }
+  percent(count: number, total: number): number { return total > 0 ? 100 * count / total : 0; }
+  isRecentPeriod(value: string): boolean {
+    const end = Date.parse(value);
+    return Number.isFinite(end) && end >= Date.now() - 14 * 86400000 && end <= Date.now() + 86400000;
+  }
+  assignedCountryCount(countries: CountryStat[]): number { return countries.filter(item => item.country_id !== 'UNASSIGNED').length; }
+  unassignedCount(countries: CountryStat[]): number { return countries.find(item => item.country_id === 'UNASSIGNED')?.count ?? 0; }
+  countryChart(countries: Statistics['countries']): CountryBin[] {
+    const selected = countries.slice(0, 6);
+    const unassigned = countries.find(item => item.country_id === 'UNASSIGNED');
+    if (unassigned && !selected.includes(unassigned)) selected.push(unassigned);
+    const other = countries.filter(item => !selected.includes(item)).reduce((sum, item) => sum + item.count, 0);
+    return [...selected.map(item => ({ label: this.countryDisplay(item.country_id, item.country_name), code: item.country_id, count: item.count })), ...(other ? [{ label: 'Otros países', code: 'OTHER', count: other }] : [])];
+  }
+  otherCountries(countries: Statistics['countries']): CountryStat[] {
+    const shown = new Set(this.countryChart(countries).map(item => item.code));
+    return countries.filter(item => !shown.has(item.country_id));
+  }
+  hourlyChart(hours: Statistics['hourly_utc']): Bin[] {
+    return hours.slice(-8).map(item => ({ label: `${item.hour_utc.slice(0, 16).replace('T', ' ')} UTC`, count: item.count }));
+  }
+  date(value: unknown): string {
     if (typeof value !== 'number' || !Number.isFinite(value)) return 'ND';
-    const d = new Date(value); return Number.isNaN(d.getTime()) ? 'ND' : d.toISOString();
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'ND' : `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+  }
+  formatDepth(value: unknown): string {
+    return typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value) : 'ND';
+  }
+  formatMagnitude(value: unknown): string {
+    return typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 }).format(value) : 'ND';
+  }
+  depth(feature: FeatureCollection<Point, Properties>['features'][number]): string {
+    const value = feature.geometry.coordinates[2];
+    return this.formatDepth(value);
+  }
+  replayDate(value: unknown): string {
+    return typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? this.date(Date.parse(value)) : 'ND';
+  }
+  traceDate(value: string | null | undefined): string {
+    return value ? this.replayDate(value) : 'no medido';
   }
   ngOnDestroy(): void { this.destroyed = true; clearTimeout(this.timer); this.controller.abort(); }
 }

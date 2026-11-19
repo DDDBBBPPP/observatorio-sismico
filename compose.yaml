@@ -59,11 +59,22 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
       KAFKA_TEST_TOPIC: ${KAFKA_TEST_TOPIC:-observatorio-test}
+      KAFKA_LIVE_TOPIC: ${KAFKA_LIVE_TOPIC:-observatorio-usgs-live}
+      KAFKA_REPLAY_TOPIC: ${KAFKA_REPLAY_TOPIC:-observatorio-usgs-replay}
       KAFKA_TEST_PARTITIONS: ${KAFKA_TEST_PARTITIONS:-1}
       KAFKA_TEST_REPLICATION_FACTOR: ${KAFKA_TEST_REPLICATION_FACTOR:-1}
       KAFKA_PUBLISH_TIMEOUT_SECONDS: ${KAFKA_PUBLISH_TIMEOUT_SECONDS:-10}
+      USGS_FEED_URL: ${USGS_FEED_URL:-https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson}
+      USGS_POLL_INTERVAL_SECONDS: ${USGS_POLL_INTERVAL_SECONDS:-60}
+      USGS_REQUEST_TIMEOUT_SECONDS: ${USGS_REQUEST_TIMEOUT_SECONDS:-30}
+      USGS_MAX_ATTEMPTS: ${USGS_MAX_ATTEMPTS:-3}
+      USGS_ORIGINALS_DIR: ${USGS_ORIGINALS_DIR:-/evidence/002-ingesta-usgs-persistencia/originals}
+      USGS_LIVE_ORIGINAL_RETENTION_DAYS: ${USGS_LIVE_ORIGINAL_RETENTION_DAYS:-30}
+      USGS_HISTORICAL_DIR: ${USGS_HISTORICAL_DIR:-/evidence/002-ingesta-usgs-persistencia/historical}
+      USGS_HISTORICAL_LIMIT: ${USGS_HISTORICAL_LIMIT:-20000}
     volumes:
-      - ./evidence/001-minimal-kafka-flow:/evidence
+      - ./evidence:/evidence
+      - ./frontend/public/datos/paises.geojson:/app/catalog/paises.geojson:ro
     depends_on:
       kafka:
         condition: service_healthy
@@ -84,10 +95,22 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
       KAFKA_TEST_TOPIC: ${KAFKA_TEST_TOPIC:-observatorio-test}
+      KAFKA_LIVE_TOPIC: ${KAFKA_LIVE_TOPIC:-observatorio-usgs-live}
+      KAFKA_REPLAY_TOPIC: ${KAFKA_REPLAY_TOPIC:-observatorio-usgs-replay}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+      COUNTRY_CATALOG_PATH: /app/catalog/paises.geojson
+      USGS_LIVE_ORIGINAL_RETENTION_DAYS: ${USGS_LIVE_ORIGINAL_RETENTION_DAYS:-30}
     volumes:
-      - ./evidence/001-minimal-kafka-flow:/evidence
+      - ./evidence:/evidence
+      - ./frontend/public/datos/paises.geojson:/app/catalog/paises.geojson:ro
     depends_on:
       producer:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     command: ["python", "/app/src/main.py", "serve"]
     healthcheck:
@@ -109,8 +132,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-observatorio}
       POSTGRES_USER: ${POSTGRES_USER:-observatorio}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://127.0.0.1:4200}
     ports:
       - "127.0.0.1:8000:8000"
+    volumes:
+      - ./evidence/002-ingesta-usgs-persistencia:/evidence/002-ingesta-usgs-persistencia:ro
     depends_on:
       postgres:
         condition: service_healthy
