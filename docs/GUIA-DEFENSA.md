@@ -64,9 +64,10 @@ tiempo y país permiten consultas de ventanas; medí también casos con y sin
 máquina. La copia histórica documentada contiene doce originales y su coste
 de almacenamiento es medible; no invento una factura eléctrica o laboral.
 Netlify puede servir la interfaz aunque mi equipo esté apagado, pero los
-datos requieren este PC, Docker y ngrok. La prueba local de 24 horas solo
-podrá declararse completada tras transcurrir y evaluar todas las muestras;
-además queda probar caída y recuperación del túnel desde otro dispositivo.»
+datos requieren este PC, Docker y ngrok. La prueba local de 24 horas terminó
+con 289 muestras cada cinco minutos, cinco servicios sanos y sin huecos ni
+errores de muestra; no mide la disponibilidad pública continua. Queda probar
+la caída y recuperación del túnel desde otro dispositivo.»
 
 ## 4:35–5:00 · Cierre
 

@@ -270,8 +270,8 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [x] T059 Mejorar panel Angular y aclarar última consulta USGS frente al
   último terremoto del filtro; build local y pruebas de filtros superados.
 - [x] T060 Crear comprobador cada cinco minutos y realizar muestra breve.
-- [ ] T061 Observar las 24 horas completas, revisar el archivo JSONL y evaluar
-  salud, errores, recuentos y retraso sin declarar éxito antes de tiempo.
+- [x] T061 Observar las 24 horas completas, revisar el JSONL de 289 muestras
+  y evaluar salud, errores, recuentos y lag; evidencia en `docs/ACEPTACION.md`.
 - [ ] T062 Capturar y revisar visualmente el antes/después en navegador; el
   navegador integrado no estuvo disponible en esta sesión.
 - [x] T063 Publicar el nuevo frontend en el proyecto Netlify existente
@@ -308,8 +308,8 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
   tras estabilizar/publicar; primera muestra sana a las 00:50:16 UTC.
 - [x] T074 Verificar visualmente escritorio y móvil con Chrome headless local y
   capturas; el navegador integrado no tuvo sesiones disponibles.
-- [ ] T075 Completar 24 horas reales desde la nueva medición y revisar huecos,
-  salud, frescura, errores, recuentos y lag.
+- [x] T075 Completar 24 horas reales desde la nueva medición y revisar huecos,
+  salud, frescura, errores, recuentos y lag: 289/289 muestras, 0 huecos >450 s.
 
 ### Profundidad, trazabilidad y revisión visual (18-11-2026)
 
@@ -327,9 +327,9 @@ como `mode=historical` en PostgreSQL, sin presentarlo como recepción reciente.
 - [x] T080 Verificar el nuevo build `main-GIBIKXGC.js` publicado en Netlify
   (`6afd9c835bbf58fb34663797`), API/CORS por HTTP y navegador público a
   1440/375 px; guardar capturas y manifiesto UTC.
-- [ ] T081 Completar y evaluar 24 horas reales. David autorizó la nueva
-  medición, iniciada el 18-11-2026 a las 15:03:04 UTC; la primera muestra
-  fue sana. La ejecución anterior conserva seis muestras exploratorias.
+- [x] T081 Completar y evaluar la medición autorizada del 18-11-2026
+  15:03:04 UTC al 19-11-2026 15:03:04 UTC. `complete_24h=true`; JSONL íntegro
+  publicado. La ejecución anterior conserva seis muestras exploratorias.
 
 ## Dependencies & Execution Order
 

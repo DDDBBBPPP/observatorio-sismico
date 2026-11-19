@@ -40,8 +40,11 @@ exponen. Véanse el [modelo](docs/MODELO-DATOS.md), el
 - **Histórico:** instantánea del catálogo USGS de `[2025-01-01, 2026-01-01)`
   UTC, mundo, `type=earthquake`, magnitud ≥4. La copia documentada tiene
   **18.302 eventos**; otra descarga futura puede diferir.
-- **Replay:** reenvía una selección histórica por Kafka a tablas separadas.
-  Sus tiempos de ocurrencia son antiguos y no se suman al live.
+- **Replay:** esta instalación reenvió realmente **diez eventos históricos**
+  por Kafka a tablas separadas. REPRODUCCIÓN filtra dentro de esos diez;
+  elegir otras fechas no inicia otro reenvío. Diez no es un límite de Kafka
+  ni representa todo el histórico. Sus tiempos de ocurrencia son antiguos y
+  no se suman al live.
 
 `event_id` es la clave Kafka. PostgreSQL conserva una versión única por
 `(event_id, updated)`; una revisión posterior sustituye el estado actual y un
@@ -147,6 +150,8 @@ Los **cinco criterios de la rúbrica** tienen evidencia documentada en
 [aceptación](docs/ACEPTACION.md); eso no sustituye una calificación externa.
 T005 visual está cerrada con capturas reproducibles. T006 sigue pendiente para
 probar desde **otro dispositivo** la caída y recuperación del túnel. La
-medición de 24 horas solo puede declararse superada tras completar y evaluar
-sus muestras; consulte el [estado actual](docs/ESTADO-PROYECTO.md). El PR #1
-sigue en borrador y no se ha fusionado.
+[medición local de 24 horas](docs/ACEPTACION.md) terminó: 289 muestras cada
+cinco minutos, cinco servicios sanos, sin huecos ni errores de muestra; lag
+Kafka máximo 0. Mide el entorno local, no la disponibilidad pública continua
+de Netlify/ngrok. El [estado actual](docs/ESTADO-PROYECTO.md) conserva los
+límites y pendientes. El PR #1 sigue en borrador y no se ha fusionado.

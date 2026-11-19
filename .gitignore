@@ -23,6 +23,7 @@ evidence/001-minimal-kafka-flow/*
 evidence/002-ingesta-usgs-persistencia/*
 !evidence/002-ingesta-usgs-persistencia/.gitkeep
 !evidence/002-ingesta-usgs-persistencia/README.md
+!evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl
 *.log
 
 # Docker and editor state

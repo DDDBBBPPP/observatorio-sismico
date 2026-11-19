@@ -1,5 +1,23 @@
 # Estado del proyecto
 
+## Estado vigente — 19-11-2026: medición local completada
+
+- La medición iniciada el **18-11 a las 15:03:04 UTC** terminó el **19-11 a
+  las 15:03:04 UTC**. El evaluador confirmó **24,0 horas**, **289/289**
+  muestras, ningún hueco >450 s, ninguna muestra no saludable o con error,
+  antigüedad máxima de consulta USGS **79,6 s**, ninguna muestra >10 min,
+  lag Kafka máximo **0** y `complete_24h=true`. Se contrastaron primer y
+  último registro. El [JSONL íntegro y sus límites](ACEPTACION.md)
+  están publicados como evidencia; no se reinició el monitor ni se recargó
+  el histórico para este cierre.
+- El muestreo es **local y cada cinco minutos**: no mide disponibilidad
+  pública continua de Netlify/ngrok ni cada segundo entre muestras. T006 de
+  segundo dispositivo y caída/recuperación del túnel sigue pendiente.
+  REPRODUCCIÓN filtra los diez eventos históricos ya reenviados por Kafka a
+  tablas separadas; elegir otras fechas no ejecuta otro replay.
+- Las secciones posteriores conservan lo observado en sus fechas anteriores
+  como cronología. El PR #1 permanece en borrador, sin fusionar.
+
 ## Auditoría de procedencia y modelo sin interrumpir el monitor — 18-11-2026
 
 - Rama `002-ingesta-usgs-persistencia`, punto inicial `d2195e399d08cbf5efcfa6fff2fffb4dc445f7a1`.

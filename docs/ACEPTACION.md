@@ -537,3 +537,45 @@ El README revisado separa el arranque live mediante `docker compose up --build
 el histórico de 18.302 en un Windows nuevo. No se probaron esos comandos en
 esta sesión ni se hizo una instalación limpia en otro equipo. T005/T006
 permanecen abiertas por las comprobaciones visuales y desde otro dispositivo.
+
+## Medición local de 24 horas completada — 19-11-2026
+
+Se ejecutó `python tools/evaluate_monitor.py
+evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl` y se
+leyeron el primer y último registro del [JSONL completo](../evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl).
+El comprobador tomó una muestra local cada **300 segundos** de los cinco
+servicios Compose, salud y última consulta USGS de la API, recuentos, errores
+y lag del grupo consumidor Kafka. El archivo tiene **289 registros válidos**,
+**247.673 bytes** y SHA-256
+`71c38090e68e57e1d2ca44d84a46889ce5b8cb723af59ae0a88b52a8d89fbf90`.
+Se revisaron todas sus claves y patrones de credenciales, tokens, URL y rutas
+personales: no contiene ninguno. `.gitignore` permite publicar solo este
+JSONL de la carpeta de ejecución.
+
+| Medida verificada | Resultado |
+| --- | --- |
+| Primera / última muestra | 18-11-2026 **15:03:04.098498 UTC** / 19-11-2026 **15:03:04.099417 UTC** |
+| Duración y cobertura | **24,0 h**, **289/289** muestras esperadas; `complete_24h=true` |
+| Separación máxima / huecos >450 s | **300,016 s** / **0** |
+| Servicios no saludables / muestras con errores | **0 / 0** |
+| Antigüedad máxima de última consulta USGS / muestras >10 min | **79,6 s / 0** |
+| Lag Kafka máximo / muestras sin medición de lag | **0 mensajes / 0** |
+
+El primer registro anotó cinco servicios `running/healthy`, consulta USGS
+correcta a **15:02:20.877343 UTC**, `record_count=195`, **196** eventos live
+en su ventana móvil, **18.302** históricos y **10** en replay; errores `[]`
+y lag 0. El último anotó también cinco sanos, consulta a
+**15:02:40.827893 UTC**, `record_count=199`, **203** live, los mismos
+**18.302** históricos y **10** replay; errores `[]` y lag 0. Los recuentos
+live y los features del feed miden conjuntos distintos y pueden cambiar.
+`live_fetch_errors_total=11` permaneció constante en las 289 muestras: es
+un contador acumulado que ya tenía ese valor al inicio, no once errores
+ocurridos durante la prueba.
+
+**Alcance:** estos resultados acreditan el muestreo **local** en intervalos
+de cinco minutos. No prueban disponibilidad continua entre muestras ni
+disponibilidad pública de Netlify o ngrok. Sigue pendiente T006: comprobar
+desde otro dispositivo la caída y recuperación del túnel. La vista
+REPRODUCCIÓN contiene los **diez eventos históricos efectivamente reenviados
+por Kafka** a tablas separadas; sus filtros consultan ese conjunto y cambiar
+fechas no envía nuevos eventos ni demuestra un mes histórico completo.
