@@ -58,8 +58,7 @@ desconocidas permanecen como `null`/ND. Más detalle en
 ## Arranque local en Windows
 
 Requisitos: Git, Docker Desktop con motor Linux y Compose v2, PowerShell,
-Python 3.12+ y Node.js 22.12+ con npm. Mientras el PR #1 siga sin fusionar,
-clone **esta rama**:
+Python 3.12+ y Node.js 22.12+ con npm. Para instalar esta versión del proyecto:
 
 ```powershell
 git clone --branch 002-ingesta-usgs-persistencia --single-branch https://github.com/DDDBBBPPP/observatorio-sismico.git
@@ -131,27 +130,29 @@ docker compose config --quiet
 `run_checks.py` limita la duración de cada prueba e incluye contrato API,
 filtros, SQL, componente Angular, build e integración Kafka. Su prueba de
 integración interrumpe el consumidor: **no la ejecute durante una medición de
-disponibilidad**. Las pruebas y observaciones anteriores están en
-[aceptación](docs/ACEPTACION.md). El contrato de partida se conserva en
-[material del profesor](docs/material-profesor/CONTRATO-API.md).
+disponibilidad**. Las pruebas y observaciones están en
+[aceptación](docs/ACEPTACION.md).
 
 - [Calidad, transformaciones y tres conclusiones](docs/ANALISIS-CALIDAD.md)
 - [Modelo de datos](docs/MODELO-DATOS.md) y [diccionario](docs/DICCIONARIO-DATOS.md)
 - [Complejidad y costes](docs/ANALISIS-COMPLEJIDAD-COSTES.md)
-- [Aceptación y rúbrica](docs/ACEPTACION.md) y [estado](docs/ESTADO-PROYECTO.md)
+- [Resultados y pruebas de aceptación](docs/ACEPTACION.md)
 - [Capturas y manifiesto UTC](evidence/002-ingesta-usgs-persistencia/visual-depth-night-20261118/manifest.json)
 - [Guion de defensa](docs/GUIA-DEFENSA.md)
 - [Fuentes y licencias](FUENTES-Y-LICENCIAS.md)
-- [Enunciado y guía de entregables](docs/material-profesor/README.md)
 
-## Estado de entrega
+## Prueba de funcionamiento durante 24 horas
 
-Los **cinco criterios de la rúbrica** tienen evidencia documentada en
-[aceptación](docs/ACEPTACION.md); eso no sustituye una calificación externa.
-T005 visual está cerrada con capturas reproducibles. T006 sigue pendiente para
-probar desde **otro dispositivo** la caída y recuperación del túnel. La
-[medición local de 24 horas](docs/ACEPTACION.md) terminó: 289 muestras cada
-cinco minutos, cinco servicios sanos, sin huecos ni errores de muestra; lag
-Kafka máximo 0. Mide el entorno local, no la disponibilidad pública continua
-de Netlify/ngrok. El [estado actual](docs/ESTADO-PROYECTO.md) conserva los
-límites y pendientes. El PR #1 sigue en borrador y no se ha fusionado.
+Del 18 al 19 de noviembre de 2026, un monitor local registró una muestra cada
+cinco minutos durante 24 horas. Obtuvo las 289 muestras previstas: los cinco
+servicios aparecieron saludables en todas ellas, sin errores de muestra ni
+huecos superiores a 450 segundos. La última consulta correcta a USGS tuvo una
+antigüedad máxima de 79,6 segundos y el lag Kafka medido fue de 0 mensajes.
+El contador acumulado de errores de consulta permaneció estable durante la
+prueba.
+
+El [registro íntegro de las 289 muestras](evidence/002-ingesta-usgs-persistencia/monitor-entrega-20261118.jsonl)
+y el [análisis de la prueba](docs/ACEPTACION.md#medición-local-de-24-horas-completada--19-11-2026)
+permiten revisar el periodo, los resultados y el SHA-256 del archivo. La
+medición se hizo en el equipo local cada cinco minutos; no mide los segundos
+entre muestras ni la disponibilidad continua de la web pública y el túnel.
