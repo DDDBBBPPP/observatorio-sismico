@@ -30,11 +30,22 @@
   `frontend/netlify.toml` el build de Netlify. La nueva sección convivirá con
   la vista actual y tendrá estado de lectura y filtros propios, sin mapa.
 
+## Diseño acordado por David
+
+El conjunto comparable propuesto son los años completos 2023–2025, mundo,
+terremotos USGS, magnitud ≥4 y `eventtype=earthquake`. Solo 2025 tiene una
+carga histórica documentada en el proyecto; 2023–2024 no se declaran
+disponibles antes de cargarlos y conciliarlos. 2026 queda marcado parcial hasta
+acreditar cada intervalo. La cabecera, tres KPI, cuatro gráficos, distribución
+y reglas de cobertura se detallan en `spec.md` y
+`guia-visualizacion.md`. La sección Angular se separa de la exploración live.
+
 ## Secuencia técnica prevista
 
 1. **Modelo y seguridad.** Diseñar en Supabase una proyección mínima de eventos
    reales vigentes, identificada por `event_id`, con `updated` de USGS,
-   `event_time`, atributos analíticos necesarios y alcance de cobertura. Separar
+   `event_time`, `mag`, `depth_km`, `country_id`, `country_name` y alcance de
+   cobertura. Separar
    tablas de control y metadatos de sincronización de la superficie pública.
    Publicar solo una vista, función de lectura o API que aplique las restricciones
    acordadas; limitar columnas, parámetros, rangos y volumen. Configurar y
@@ -59,23 +70,25 @@
 4. **Lectura analítica.** Elegir entre API de lectura propia o consultas seguras
    de Supabase según permisos y coste reales. Definir un contrato que devuelva
    datos de un único periodo e instantánea junto con `last_synced_at`, cobertura
-   y errores distinguibles. Los límites `[inicio, fin)` se expresan en UTC;
+   por días UTC acreditados y errores distinguibles. Los límites `[inicio, fin)` se expresan en UTC;
    «últimos 12 meses» y «última semana» se calculan con un final de referencia
-   explícito. Rechazar rangos/volúmenes abusivos. Las cifras concretas esperan
-   la selección de KPI y gráficos.
+   explícito. Rechazar rangos/volúmenes abusivos. Calcular registros únicos,
+   media sobre días cubiertos, máximo con fecha y los cuatro gráficos desde
+   una misma selección; documentar nulos y reconciliar sumas.
 5. **Interfaz.** Añadir navegación y sección «Cuadro de mando» dentro de
    Angular. Mantener aparte el mapa y los filtros/API actuales. Aplicar un
    único estado de consulta por filtro, cancelar o ignorar respuestas antiguas
    y actualizar juntos título, periodo y cifras. Mostrar siempre la fecha de
    última sincronización correcta y la condición de copia histórica, con
    estados de carga, falta de cobertura y error accesibles. La composición
-   visual se diseñará al recibir ejemplos y capturas.
+   visual seguirá `guia-visualizacion.md` con un diseño propio.
 6. **Verificación y operación.** Probar idempotencia, revisión posterior y
    antigua, corte y reanudación, concurrencia, exclusiones, permisos públicos
    y lectura desde Netlify con el PC apagado. Documentar configuración local
    segura, arranque, seguimiento, recuperación y límites de cobertura.
 
-## Límite de este primer paso
+## Límites vigentes
 
-Solo se añaden `spec.md`, `plan.md` y `tasks.md` en este directorio. Ningún
-esquema, servicio, dato, secreto o archivo de Angular se modifica ahora.
+T001 prepara modelo, permisos y contrato sin alterar la carga histórica local.
+La carga y conciliación de 2023–2024 pertenecen a una entrega posterior;
+ningún requisito visual implica que esos años estén disponibles hoy.

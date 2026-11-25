@@ -1,9 +1,8 @@
 # Tareas: Cuadro de mando analítico
 
-Las tareas T001–T007 son entregas futuras. Cada una se cerrará con evidencia
-de su criterio de comprobación y **un commit propio**. No se marcarán como
-terminadas por haber redactado este plan. Los años, KPI, gráficos y distribución
-visual requieren los ejemplos y capturas del usuario antes de implementarse.
+Cada tarea se cierra con evidencia y **un commit propio**. El diseño documental
+de David está recogido en `spec.md`, `plan.md` y `guia-visualizacion.md`.
+Los años 2023–2024 son objetivos de carga, no cobertura disponible.
 
 - [ ] **T001 — Modelo analítico y seguridad.** Definir esquema mínimo, identidad
   y regla de revisión; crear la superficie pública de lectura y los permisos
@@ -24,12 +23,13 @@ visual requieren los ejemplos y capturas del usuario antes de implementarse.
   correcta sin adelantos ficticios.
 - [ ] **T004 — API de lectura o consultas seguras.** Elegir y documentar una
   de las dos vías tras verificar permisos, límites y contrato. Probar filtros
-  de año, últimos 12 meses y última semana en UTC, cobertura incompleta,
+  de año, últimos 12 meses, última semana y magnitud mínima ≥4 en UTC, cobertura incompleta,
   respuesta vacía válida, errores y metadatos coherentes. Entrega: consultas
   públicas limitadas y pruebas de acceso directo con rol público.
 - [ ] **T005 — Interfaz Angular.** Con ejemplos y capturas recibidos, añadir
-  navegación y sección sin mapa; conectar la lectura analítica, filtros y
-  estados. Comprobar que título, periodo y todas las cifras cambian juntos,
+  navegación y sección sin mapa, separada de live; conectar lectura, filtros,
+  cabecera, 3 KPI y 4 gráficos según `guia-visualizacion.md`. Comprobar que
+  título, periodo y todas las cifras cambian juntos,
   que una respuesta antigua no pisa otra nueva y que nunca se presenta la
   copia como tiempo real. Entrega: build y comprobación funcional/visual.
 - [ ] **T006 — Pruebas con PC apagado.** Con una copia ya sincronizada, apagar

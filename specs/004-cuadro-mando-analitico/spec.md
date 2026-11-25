@@ -9,9 +9,8 @@ de Angular se conservan. Supabase recibe una copia de lectura analítica desde
 PostgreSQL local cuando el equipo está encendido; no sustituye la base local ni
 la API existente.
 
-Esta especificación fija comportamiento y límites. **En esta entrega solo se
-redacta documentación**: no se crea un proyecto Supabase, no se descargan ni
-cargan datos y no se cambia la aplicación.
+Las reglas de presentación están en `guia-visualizacion.md`. El diseño inicial
+de T001 no autoriza ninguna descarga ni carga histórica.
 
 ## Escenarios y requisitos
 
@@ -41,15 +40,39 @@ cargan datos y no se cambia la aplicación.
 
 ### Periodos y coherencia
 
-- **CM-06** Se prevén filtros sencillos por **año**, **últimos 12 meses** y
-  **última semana**. Cada respuesta identifica el intervalo efectivo y su zona
-  temporal, la cobertura disponible y la fecha de la copia. Título, etiqueta
-  del periodo y todas las cifras/gráficos visibles corresponden al mismo filtro
-  aplicado y a la misma instantánea; mientras se carga otra consulta no se
-  mezclan resultados.
-- **CM-07** Se planifica ampliar el histórico a varios años. La selección de
-  años y cualquier nueva descarga o carga quedan pendientes; los periodos sin
-  cobertura no se muestran como ceros ni como años completos.
+- **CM-06** Los filtros son **año**, **últimos 12 meses**, **última semana** y
+  **magnitud mínima**. El umbral del cuadro es siempre ≥4; uno menor se rechaza
+  o se explica como fuera del conjunto comparable. Todos los límites de tiempo
+  son `[inicio, fin)` UTC. Cada respuesta identifica intervalo efectivo,
+  cobertura y fecha de copia. Título, rango, KPI y gráficos usan un único filtro
+  aplicado y una única instantánea; las respuestas antiguas no los mezclan.
+- **CM-07** El conjunto comparable inicial **propuesto** son 2023, 2024 y 2025
+  completos: terremotos USGS mundiales con magnitud ≥4 y
+  `eventtype=earthquake`. La cobertura de 2025 existente no acredita 2023–2024:
+  esos años se muestran «sin cobertura» hasta cargarlos y conciliarlos. 2026
+  es parcial hasta acreditar su cobertura. Un hueco nunca cuenta como cero.
+- **CM-10** La cabecera muestra periodo UTC, fuente USGS, criterio de selección
+  y última sincronización correcta con Supabase. Los tres KPI son registros
+  únicos (`event_id` vigente), media diaria sobre días cubiertos y magnitud
+  máxima con fecha de ocurrencia UTC. La media usa como numerador los registros
+  elegibles ocurridos en días cubiertos del filtro y como denominador el número
+  de días UTC cubiertos del mismo filtro; con cero días cubiertos se muestra
+  «sin cobertura», no cero. La magnitud máxima ignora magnitudes nulas; si no
+  hay ninguna válida se muestra ND, sin inventar fecha. Un empate se resuelve
+  por fecha de evento más reciente y después por `event_id` estable.
+- **CM-11** Un día cubierto es un día calendario UTC cuya intersección con el
+  intervalo solicitado tiene cobertura de origen acreditada y ya sincronizada
+  de extremo a extremo. Los KPI y gráficos usan solo esos días. Se informa
+  «N de M días cubiertos»; los días restantes se marcan «sin cobertura». Una
+  ventana válida con días cubiertos y sin eventos sí puede mostrar cero.
+- **CM-12** El cuadro incluye evolución mensual comparable, histograma de
+  magnitud, distribución de profundidad en km con ND y barras horizontales de
+  países con «Sin país asignado». Cada gráfico utiliza los mismos eventos
+  elegibles que los KPI y hace visibles nulos, cobertura y denominadores. Una
+  comparación mensual usa idénticos filtros y solo trata como equivalentes los
+  meses completamente cubiertos; los meses incompletos quedan marcados como
+  parciales o «sin cobertura». Los recuentos por país describen asignaciones,
+  **no riesgo sísmico**.
 
 ### Separación de datos y seguridad
 
@@ -79,13 +102,26 @@ cargan datos y no se cambia la aplicación.
 5. Cambiar de periodo actualiza conjuntamente título, rango efectivo y todas
    las cifras. Un año sin cobertura y un error de red se distinguen de un cero
    real; una respuesta lenta anterior no sobrescribe el filtro nuevo.
+6. Para un año completo acreditado, el contrato devuelve 365 o 366 días
+   cubiertos según corresponda; 2023 y 2024 devuelven «sin cobertura» hasta
+   que existan cargas conciliadas. 2026 indica cobertura parcial mientras
+   falten días. Si faltan 3 de 7 días, se muestra `4/7` y la media usa 4,
+   no 7; si no hay días cubiertos, no hay media ni máximo.
+7. Al cambiar año/ventana o magnitud, cabecera, 3 KPI y 4 gráficos comparten
+   identificador de consulta, rango UTC y marca de sincronización. Sus totales
+   coinciden: suma de países incluida la categoría sin asignar = registros
+   únicos; suma de profundidad incluida ND = registros únicos; suma de
+   magnitud = registros con magnitud válida, con nulos declarados aparte.
+8. En móvil (375 px) no hay desplazamiento horizontal de la página; las
+   secciones siguen el orden cabecera → KPI → evolución → magnitud/profundidad
+   → países. En escritorio, evolución ocupa el ancho, magnitud y profundidad
+   dos columnas y países va al final. Ejes, unidades, porcentajes y estado
+   «sin cobertura» se leen sin depender solo del color.
 
-## Decisiones pendientes de ejemplos y capturas
+## Decisiones aún abiertas
 
-- Años concretos que se incorporarán y cuál se ofrecerá por defecto.
-- KPI y definiciones exactas, incluidos denominadores y tratamiento de nulos.
-- Tipos, cantidad y contenido de gráficos.
-- Distribución visual, jerarquía y detalles de presentación del cuadro.
-
-No se da por elegido ningún valor de esos puntos por el hecho de que la vista
-actual ya tenga indicadores o gráficos.
+- Confirmar cuándo se cargan y concilian 2023 y 2024; hasta entonces son
+  objetivos de cobertura, no datos disponibles.
+- Elegir el año/periodo predeterminado según cobertura realmente acreditada.
+- Concretar los cortes del histograma y de la profundidad, el número máximo de
+  barras de países y los redondeos visibles sin alterar los totales subyacentes.
