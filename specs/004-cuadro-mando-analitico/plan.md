@@ -51,6 +51,10 @@ y reglas de cobertura se detallan en `spec.md` y
    acordadas; limitar columnas, parámetros, rangos y volumen. Configurar y
    verificar privilegios/RLS según el mecanismo elegido. No exponer claves de
    servicio, de escritura ni secretos en Angular, `config.json` o Netlify.
+   T001 concreta el modelo y la RPC inicial en `contrato-lectura.md` y
+   `supabase/migrations/202611250001_analytics_private.sql` /
+   `202611250002_analytics_rpc.sql`; T004 añadirá agregados y cobertura en una
+   respuesta coherente para la interfaz.
 2. **Carga inicial.** Tomar una instantánea consistente de PostgreSQL local
    sobre `event_current` elegible (`source='usgs'`, `is_synthetic=FALSE`,
    versión vigente y fuera de replay). Registrar cobertura efectiva y conciliar

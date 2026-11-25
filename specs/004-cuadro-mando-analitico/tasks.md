@@ -4,12 +4,15 @@ Cada tarea se cierra con evidencia y **un commit propio**. El diseño documental
 de David está recogido en `spec.md`, `plan.md` y `guia-visualizacion.md`.
 Los años 2023–2024 son objetivos de carga, no cobertura disponible.
 
-- [ ] **T001 — Modelo analítico y seguridad.** Definir esquema mínimo, identidad
+- [x] **T001 — Modelo analítico y seguridad (local).** Definir esquema mínimo, identidad
   y regla de revisión; crear la superficie pública de lectura y los permisos
   de escritura solo para el proceso local. Comprobar con el rol público que no
   puede escribir ni leer tablas privadas/originales y que los parámetros de
   lectura están acotados. Entrega: migraciones/contrato de acceso y resultados
-  de pruebas de seguridad, sin secretos versionados.
+  de pruebas de seguridad, sin secretos versionados. Evidencia: dos migraciones
+  versionadas, `contrato-lectura.md` y `python tests/run_analytics_t001.py`
+  correcto en PostgreSQL 16 desechable. Aplicación y prueba en un proyecto
+  Supabase real pendientes de que exista el proyecto; no se han cargado datos.
 - [ ] **T002 — Carga inicial.** Cargar desde el PostgreSQL local los eventos
   vigentes reales ya disponibles, registrar cobertura real e instante de copia.
   Comprobar recuentos e identidades por periodo y reejecutar la carga sin
